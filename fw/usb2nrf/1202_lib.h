@@ -16,7 +16,7 @@ uint8_t lcdMutex;
 void lcdInit();
 void lcdLocate(uint8_t y, uint8_t x);
 void lcdGotoXY(uint8_t x, uint8_t y);
-uint8_t lcdPrint(const string *message, tFontStyle);
+uint8_t lcdPrint(const string *message, tFontStyle style);
 void lcdPrintChar(unsigned char symbol, tFontStyle style);
 uint8_t lcdRamPrint(const char *message, tFontStyle style);
 void lcdClear();
