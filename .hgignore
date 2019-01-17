@@ -1,0 +1,8 @@
+hw/.*\.svg$
+hw/.*bak$
+hw/.*\.net$
+
+fw/usb2nrf/Debug
+fw/usb2nrf/\.vs$
+fw/.*\.xml$
+
