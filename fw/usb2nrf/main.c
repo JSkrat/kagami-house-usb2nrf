@@ -55,7 +55,7 @@ int main(void)
 	lcdInit();
 	lcdClear();
 	lcdLocate(1, 0);
-	lcdPrint(m_hello, normal);
+	lcdPrint(&m_hello, normal);
 	
 	portLEDS |= (1 << poLED_GREEN);
 	//portLEDS = m_test.length;
