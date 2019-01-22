@@ -43,6 +43,7 @@
 #define poLED_GREEN PORTD7
 
 /*** transiever ***/
-#define MACSize 5
+#define MAC_SIZE 5
+#define PAYLOAD_SIZE 32
 
 #endif /* DEFINES_H_ */
