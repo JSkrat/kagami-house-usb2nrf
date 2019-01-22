@@ -141,6 +141,12 @@
     <Compile Include="messages.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="my-stdlib.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="my-stdlib.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="UART parser.c">
       <SubType>compile</SubType>
     </Compile>

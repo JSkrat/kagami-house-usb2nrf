@@ -11,6 +11,7 @@
 #include "defines.h"
 #include <stdint.h>
 #include <avr/pgmspace.h>
+#include "messages.h"
 
 typedef enum {
 	usError,
@@ -19,9 +20,9 @@ typedef enum {
 } usState;
 
 union uPackage {
-	uint8_t packageBuffer[MACSize + 1 + 32];
+	uint8_t packageBuffer[MAC_SIZE + 1 + 32];
 	struct {
-		uint8_t MAC[MACSize];
+		uint8_t MAC[MAC_SIZE];
 		uint8_t length;
 		uint8_t data[32];
 	} package;
@@ -32,16 +33,13 @@ union uPackage {
 	};
 };
 
-/*typedef struct {
-	uint8_t length;
-	uint8_t data[];
-} string;
-
-extern const string m_test PROGMEM;*/
-
+uint8_t sendBufferBegin;
+uint8_t sendBufferEnd;
 
 void parse(unsigned char b);
-//void queue(char *str);
+#define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)
+void uQueueChar(const char c);
+void uQueueString(const string *data);
 
 
 
