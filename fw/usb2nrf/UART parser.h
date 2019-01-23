@@ -35,6 +35,7 @@ union uPackage {
 
 uint8_t sendBufferBegin;
 uint8_t sendBufferEnd;
+const string *lastCommand;
 
 void parse(unsigned char b);
 #define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)

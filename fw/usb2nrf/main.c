@@ -14,6 +14,7 @@
 #include "1202_lib.h"
 #include "messages.h"
 #include "UART parser.h"
+#include "my-stdlib.h"
 
 ISR(BADISR_vect, ISR_NAKED) {
 	// nothing here
@@ -70,12 +71,12 @@ int main(void)
     while (1) {
 		lcdLocate(0, 0);
 		lcdPrint(&m_sendQueueSize, normal);
-		if (sendBufferBegin == sendBufferEnd) {
-			lcdPrint(&m_empty, normal);
-		} else {
-			lcdPrint(&m_notEmpty, normal);
-		}
-		//sleep_mode();
+		lcdRamPrint(SStr(sendBufferEnd - sendBufferBegin), normal);
+		
+		lcdLocate(2, 0);
+		lcdPrint(&m_last_command, normal);
+		lcdPrint(lastCommand, normal);
+		sleep_mode();
     }
 }
 

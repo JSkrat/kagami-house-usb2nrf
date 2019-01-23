@@ -15,6 +15,8 @@ uint8_t position = 0;
 uint8_t dataLength = 0;
 union uPackage packageBuffer;
 
+const string *lastCommand = &m_c_none;
+
 // +1 for make sure begin and end will be equal only at empty buffer
 #define SEND_BUFFER_SIZE (1 + MAC_SIZE + PAYLOAD_SIZE + 1)
 uint8_t sendBuffer[SEND_BUFFER_SIZE];
@@ -57,12 +59,23 @@ void parse(unsigned char b)
 		case usStart: {
 			switch (b) {
 				case '?': {
+					lastCommand = &m_c_status;
+					// protocol version
+					uQueueChar(0);
+					// packages lost since last request
+					uQueueChar(0);
+					// packages in receive buffer
+					uQueueChar(0);
+					
+					U_TRANSMIT_START;
 					break;
 				}
 				case 'R': {
+					lastCommand = &m_c_receive;
 					break;
 				}
 				case 'S': {
+					lastCommand = &m_c_send;
 					state = usSPackage;
 					position = 0;
 					break;

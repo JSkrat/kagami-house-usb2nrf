@@ -274,8 +274,8 @@ uint8_t lcdPrint(const string *message, tFontStyle style) { // 13 + (13 + lcdPri
 	META_PRINT(pgm_read_byte(message), message, style);
 }
 
-uint8_t lcdRamPrint(const char *message, tFontStyle style) {
-	META_PRINT(*message, message, style);
+uint8_t lcdRamPrint(const string *message, tFontStyle style) {
+	META_PRINT((message->length), message, style);
 }
 
 void lcdClear() {
