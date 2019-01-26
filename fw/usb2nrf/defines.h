@@ -9,8 +9,6 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
-#define F_CPU 8000000UL
-
 #define CEILING(x,y) (((x) + (y) - 1) / (y))
 #define STR2(s) #s
 #define STR(s) STR2(s)
@@ -45,5 +43,8 @@
 /*** transiever ***/
 #define MAC_SIZE 5
 #define PAYLOAD_SIZE 32
+
+#define portTransiever PORTB
+#define poTransiever_IRQ PORTB0
 
 #endif /* DEFINES_H_ */
