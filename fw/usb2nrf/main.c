@@ -15,16 +15,11 @@
 #include "messages.h"
 #include "UART parser.h"
 #include "my-stdlib.h"
+#include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
+#include "avr-nrf24l01-master/src/nrf24l01.h"
 
 ISR(BADISR_vect, ISR_NAKED) {
 	// nothing here
-}
-
-ISR(USART_RX_vect) {
-	// on not empty receive buffer
-	// error flags for current UDR0, must be read before reading UDR0
-	// UCSR0A: FE0 frame error (stop bit is not 1), DOR0 data overrun, UPE0 parity error
-	parse(UDR0);
 }
 
 
@@ -50,6 +45,20 @@ int main(void)
 	// asynchronous, 8N1
 	UCSR0C = (0b00 << UMSEL00) | (0b11 << UCSZ00) | (0b00 << UPM00) | (0 << USBS0);
 	
+	// nrf24l01
+	// interrupt from pcint0 falling edge
+	PCICR = (1 << PCIE0);
+	// pin b0 change interrupt enable
+	PCMSK0 = (1 << PCINT0);
+	rfTransiever = nRF24L01_init();
+	rfTransiever->ss.port = &portTransiever; rfTransiever->ss.pin = PORTB1;
+	rfTransiever->ce.port = &portTransiever; rfTransiever->ce.pin = PORTB2;
+	rfTransiever->mosi.port = &portTransiever; rfTransiever->mosi.pin = PORTB3;
+	rfTransiever->mosi.port = &portTransiever; rfTransiever->miso.pin = PORTB4;
+	rfTransiever->sck.port = &portTransiever; rfTransiever->sck.pin = PORTB5;
+	nRF24L01_begin(rfTransiever);
+	nListen();
+	
 	set_sleep_mode(SLEEP_MODE_IDLE);
 	// lcd
 	lcdInit();
@@ -66,10 +75,10 @@ int main(void)
 	portLEDS &= ~(1 << poLED_YELLOW);
 	//portLEDS = m_test.length;
 	lcdClear();
-	lcdLocate(1, 0);
+	lcdLocate(0, 0);
 	lcdPrint(&m_hello, normal);
     while (1) {
-		lcdLocate(0, 0);
+		lcdLocate(1, 0);
 		lcdPrint(&m_sendQueueSize, normal);
 		lcdRamPrint(SStr(sendBufferEnd - sendBufferBegin), normal);
 		

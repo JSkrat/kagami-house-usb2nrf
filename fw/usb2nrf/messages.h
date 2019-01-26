@@ -15,17 +15,11 @@ typedef struct {
 
 
 extern const string m_hello PROGMEM;
-extern const string m_mGHIntegral PROGMEM;
-extern const string m_mGHProportional PROGMEM;
-extern const string m_mGHDerivative PROGMEM;
-extern const string m_mMode PROGMEM;
-extern const string m_mMenuTimeout PROGMEM;
-extern const string m_mMenuShutdown PROGMEM;
-extern const string m_mDebug PROGMEM;
-extern const string m_smInc PROGMEM;
-extern const string m_smDec PROGMEM;
-extern const string m_smInc10 PROGMEM;
-extern const string m_smDec10 PROGMEM;
-extern const string m_smCancel PROGMEM;
+extern const string m_sendQueueSize PROGMEM;
+extern const string m_last_command PROGMEM;
+extern const string m_c_none PROGMEM;
+extern const string m_c_status PROGMEM;
+extern const string m_c_receive PROGMEM;
+extern const string m_c_send PROGMEM;
 
 #endif // MESSAGES_H_INCLUDED
