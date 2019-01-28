@@ -15,7 +15,20 @@
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
 
-#define uPacketPrefix 0xFF
+// packet prefixes
+// uart to nrf
+#define uPPU2N 0xFF
+// data packet nrf to uart
+#define uPPN2U 0xEE
+// no ack after send uart to nrf
+#define uPPNTO 0xDD
+// ack after send uart to nrf
+#define uPPNACK 0xCC
+
+// modem commands
+#define mcStatus 0
+#define mcSetChannel 0x10
+#define mcSetTXPower 0x11
 
 typedef enum {
 	usError,
@@ -24,26 +37,28 @@ typedef enum {
 	usPDataLength,
 	usPData,
 } usState;
+usState state;
 
+// packets from uart
 union uPackage {
-	uint8_t packageBuffer[(MAC_SIZE + 1 + 32)*8];
+	uint8_t packageBuffer[(MAC_SIZE + 1 + 32)];
 	struct {
 		uint8_t address[MAC_SIZE];
 		nRF24L01Message msg;
 	} rfMsg;
 };
+union uPackage packageBuffer;
 
 uint8_t sendBufferBegin;
 uint8_t sendBufferEnd;
-const string *lastCommand;
 
 nRF24L01 *rfTransiever;
 
-uint8_t badRFPackets;
+uint16_t badRFPackets;
 
 void parse(unsigned char b);
 #define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)
-void uQueueChar(const unsigned char c);
+void uQueueChar(const uint8_t c);
 void uQueueString(const string *data);
 
 void nListen();

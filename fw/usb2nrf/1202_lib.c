@@ -6,10 +6,10 @@
 #include "messages.h"
 //#include "main.h"
 
-#define charDataWidth 5
-#define charWidth 6
-#define bigCharDataWidth 20
-#define bigCharWidth 12
+#define charDataWidth ((uint8_t) 5)
+#define charWidth ((uint8_t) 6)
+#define bigCharDataWidth ((uint8_t) 20)
+#define bigCharWidth ((uint8_t) 12)
 
 uint8_t lcdMutex = 0;
 uint8_t lcd_x, lcd_y;
@@ -219,16 +219,16 @@ void lcdGotoXY(uint8_t x, uint8_t y) { // 464 clocks (58us)
     lcdMutex = 0;
 }
 
-void lcdPrintChar(unsigned char symbol, tFontStyle style) { // 947 clocks (118us)+
+void lcdPrintChar(uint8_t symbol, tFontStyle style) { // 947 clocks (118us)+
     const uint8_t *start;
     if (! (style & huge)) {
         start = &font_1[0];
         if (symbol >= 0xE0) {
-            start = (&font_3[0]) + (symbol - 0xE0) * charDataWidth;
+            start = (&font_3[0]) + ((uint16_t) symbol - 0xE0) * charDataWidth;
         } else if (symbol >= 0xA0) {
-            start = (&font_2[0]) + (symbol - 0xA0) * charDataWidth;
+            start = (&font_2[0]) + ((uint16_t) symbol - 0xA0) * charDataWidth;
         } else if (symbol >= 0x20) {
-            start = (&font_1[0]) + (symbol - 0x21) * charDataWidth;
+            start = (&font_1[0]) + ((uint16_t) symbol - 0x21) * charDataWidth;
         } else return;
     } else {
         if ((symbol < '0' || symbol > '9') && symbol != ' ') return;

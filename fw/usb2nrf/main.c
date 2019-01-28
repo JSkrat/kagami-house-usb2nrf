@@ -78,13 +78,29 @@ int main(void)
 	lcdLocate(0, 0);
 	lcdPrint(&m_hello, normal);
     while (1) {
+		portLEDS ^= (1 << poLED_GREEN);
 		lcdLocate(1, 0);
 		lcdPrint(&m_sendQueueSize, normal);
 		lcdRamPrint(SStr(sendBufferEnd - sendBufferBegin), normal);
 		
 		lcdLocate(2, 0);
-		lcdPrint(&m_last_command, normal);
-		lcdPrint(lastCommand, normal);
+		switch (state) {
+			case usError: { lcdPrint(&m_usError, normal); break; }
+			case usStart: { lcdPrint(&m_usStart, normal); break; }
+			case usPAddressTo: { lcdPrint(&m_usPAddressTo, normal); break; }
+			case usPDataLength: { lcdPrint(&m_usPDataLength, normal); break; }
+			case usPData: { lcdPrint(&m_usPData, normal); break; }
+		}
+		lcdRamPrint(Hex(packageBuffer.rfMsg.address[0]), normal);
+		lcdRamPrint(Hex(packageBuffer.rfMsg.address[1]), normal);
+		lcdRamPrint(Hex(packageBuffer.rfMsg.address[2]), normal);
+		lcdRamPrint(Hex(packageBuffer.rfMsg.address[3]), normal);
+		lcdRamPrint(Hex(packageBuffer.rfMsg.address[4]), normal);
+		
+		lcdLocate(3, 0);
+		lcdPrint(&m_uPacketLen, normal);
+		lcdRamPrint(Str(packageBuffer.rfMsg.msg.length), normal);
+		
 		sleep_mode();
     }
 }
