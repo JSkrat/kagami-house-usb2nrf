@@ -12,16 +12,15 @@
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
 #include <string.h>
+#include <util/delay.h>
 
 usState state = usStart;
 uint8_t position = 0;
 uint8_t dataLength = 0;
 union uPackage packageBuffer;
 
-const string *lastCommand = &m_c_none;
-
 // +1 for make sure begin and end will be equal only at empty buffer
-#define SEND_BUFFER_SIZE (1 + MAC_SIZE + PAYLOAD_SIZE + 1)
+#define SEND_BUFFER_SIZE ((1 + MAC_SIZE + PAYLOAD_SIZE + 1)*2)
 uint8_t sendBuffer[SEND_BUFFER_SIZE];
 /// sendBufferBegin points to next charachter to send
 /// sendBufferEnd points to next empty space in buffer
@@ -29,9 +28,11 @@ uint8_t sendBufferBegin = 0, sendBufferEnd = 0;
 
 nRF24L01 *rfTransiever;
 const uint8_t modemAddress[5] = { 0x00, 0x00, 0x00, 0x00, 0x01 };
-uint8_t badRFPackets = 0;
+uint16_t badRFPackets = 0;
+uint16_t rfTimeouts = 0;
+uint16_t rfPacketsSent = 0;
 
-void uQueueChar(const unsigned char c) {
+void uQueueChar(const uint8_t c) {
 	/// TODO check "buffer full" case and show on screen and turn on red for some time
 	// first put charachter
 	sendBuffer[sendBufferEnd] = c;
@@ -40,7 +41,7 @@ void uQueueChar(const unsigned char c) {
 	if (SEND_BUFFER_SIZE <= sendBufferEnd) sendBufferEnd = 0;	
 }
 
-void uQueueBytes(const unsigned char *bytes, const uint8_t number) {
+void uQueueBytes(const uint8_t *bytes, const uint8_t number) {
 	for (uint8_t p = 0; p < number; p++) {
 		uQueueChar(bytes[p]);
 	}
@@ -52,9 +53,23 @@ void uQueueString(const string *data) {
 	}
 }
 
-void checkTransieverRXBuf() {
+void checkTransieverRXBuf(const bool listenAfterwards) {
+	nRF24L01Message msg;
+	int txState = nRF24L01_transmit_success(rfTransiever);
+	if (-1 == txState) {
+		// no ack received n times
+		rfTimeouts++;
+		/// TODO check if buffer has enough space for packet
+		uQueueChar(uPPNTO);
+		U_TRANSMIT_START;
+	} else if (0 == txState) {
+		// ack received
+		rfPacketsSent++;
+		/// TODO check if buffer has enough space for packet
+		uQueueChar(uPPNACK);
+		U_TRANSMIT_START;
+	}
 	while (nRF24L01_data_received(rfTransiever)) {
-		nRF24L01Message msg;
 		nRF24L01_read_received_data(rfTransiever, &msg);
 		// assemble packet for uart
 		// and discard everything with payload shorter than 5 bytes
@@ -63,12 +78,13 @@ void checkTransieverRXBuf() {
 			continue;
 		}
 		/// TODO check if buffer has enough space for packet
-		uQueueChar(uPacketPrefix);
+		uQueueChar(uPPN2U);
 		uQueueBytes(msg.data, MAC_SIZE);
 		uQueueChar(msg.length - MAC_SIZE);
 		uQueueBytes(msg.data+MAC_SIZE, msg.length - MAC_SIZE);
+		U_TRANSMIT_START;
 	}
-	nListen();
+	if (listenAfterwards) nListen();
 }
 
 void nListen() {
@@ -88,7 +104,7 @@ ISR(USART_UDRE_vect) {
 	if (sendBufferBegin == sendBufferEnd) {
 		UCSR0B &= ~(1 << UDRIE0);
 		// it's a little overkill, to check rf transiever every time uart buffer empty
-		checkTransieverRXBuf();
+		//checkTransieverRXBuf();
 		return;
 	}
 	UDR0 = sendBuffer[sendBufferBegin++];
@@ -98,7 +114,51 @@ ISR(USART_UDRE_vect) {
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
 	if (portTransiever & (1 << poTransiever_IRQ)) return;
-	checkTransieverRXBuf();
+	checkTransieverRXBuf(true);
+}
+
+void processPacket() {
+	/// check here if it is for modem or for nrf network
+	if (0 == memcmp(modemAddress, packageBuffer.rfMsg.address, MAC_SIZE)) {
+		uQueueChar(uPPNACK);
+		if (0 < packageBuffer.rfMsg.msg.length) {
+			// it is for modem, parse and response here
+			uint8_t answer[32-MAC_SIZE];
+			uint8_t length = 0;
+			switch (packageBuffer.rfMsg.msg.data[0]) {
+				default: {
+					U_TRANSMIT_START;
+					return;
+					break;
+				}
+				case mcStatus: {
+					length = 8;
+					answer[0] = 0; // protocol version
+					answer[1] = nRF24L01_get_status(rfTransiever);
+					*((uint16_t*) (answer+2)) = rfPacketsSent;
+					*((uint16_t*) (answer+4)) = rfTimeouts;
+					*((uint16_t*) (answer+6)) = badRFPackets;
+					break;
+				}
+				case mcSetChannel: {
+					break;
+				}
+				case mcSetTXPower: {
+					break;
+				}
+			}
+			uQueueChar(uPPN2U);
+			uQueueBytes(modemAddress, MAC_SIZE);
+			uQueueChar(length);
+			uQueueBytes(answer, length);
+		}
+		U_TRANSMIT_START;
+	} else {
+		// transmit packet
+		checkTransieverRXBuf(false);
+		_delay_us(10);
+		nRF24L01_transmit(rfTransiever, packageBuffer.rfMsg.address, &(packageBuffer.rfMsg.msg));
+	}
 }
 
 void parse(unsigned char b)
@@ -108,7 +168,7 @@ void parse(unsigned char b)
 			break;
 		}
 		case usStart: {
-			if (uPacketPrefix == b) {
+			if (uPPU2N == b) {
 				state = usPAddressTo;
 				position = 0;
 			} else {
@@ -130,6 +190,7 @@ void parse(unsigned char b)
 			if (0 == b) {
 				state = usStart;
 				// send packet to nrf here
+				processPacket();
 			} else {
 				state = usPData;
 			}
@@ -140,6 +201,7 @@ void parse(unsigned char b)
 			if (packageBuffer.rfMsg.msg.length <= position) {
 				state = usStart;
 				// send packet to nrf here
+				processPacket();
 			}
 			break;
 		}

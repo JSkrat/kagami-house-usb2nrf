@@ -17,7 +17,7 @@ void lcdInit();
 void lcdLocate(uint8_t y, uint8_t x);
 void lcdGotoXY(uint8_t x, uint8_t y);
 uint8_t lcdPrint(const string *message, tFontStyle style);
-void lcdPrintChar(unsigned char symbol, tFontStyle style);
+void lcdPrintChar(uint8_t symbol, tFontStyle style);
 uint8_t lcdRamPrint(const string *message, tFontStyle style);
 void lcdClear();
 

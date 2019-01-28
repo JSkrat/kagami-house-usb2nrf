@@ -14,7 +14,7 @@
 #define STR(s) STR2(s)
 
 /*** USART ***/
-#define BAUDRATE 1000000
+#define BAUDRATE 200000
 
 
 /*** LCD ***/
