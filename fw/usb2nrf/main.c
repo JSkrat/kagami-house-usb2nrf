@@ -23,6 +23,17 @@ ISR(BADISR_vect, ISR_NAKED) {
 }
 
 
+ISR(TIMER0_OVF_vect) {
+	uint8_t rpd;
+	nRF24L01_read_register(rfTransiever, RPD, &rpd, 1);
+	if (0 == rpd) {
+		portLEDS &= ~(1 << poLED_YELLOW);
+		} else {
+		portLEDS |= (1 << poLED_YELLOW);
+	}
+}
+
+
 int main(void)
 {
 	/* hardware initialization */
@@ -45,10 +56,16 @@ int main(void)
 	// asynchronous, 8N1
 	UCSR0C = (0b00 << UMSEL00) | (0b11 << UCSZ00) | (0b00 << UPM00) | (0 << USBS0);
 	
+	// timer to update leds
+	// clk io / 8
+	TCCR0B = (0 << CS02) | (1 << CS01) | (0 << CS00);
+	TIMSK0 = (1 << TOIE0);
+	
 	// nrf24l01
 	// interrupt from pcint0 falling edge
 	PCICR = (1 << PCIE0);
 	// pin b0 change interrupt enable
+	uint8_t wr = 0;
 	PCMSK0 = (1 << PCINT0);
 	rfTransiever = nRF24L01_init();
 	rfTransiever->ss.port = &portTransiever; rfTransiever->ss.pin = PORTB1;
@@ -57,6 +74,8 @@ int main(void)
 	rfTransiever->mosi.port = &portTransiever; rfTransiever->miso.pin = PORTB4;
 	rfTransiever->sck.port = &portTransiever; rfTransiever->sck.pin = PORTB5;
 	nRF24L01_begin(rfTransiever);
+	// 1Mbps, max power
+	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
 	nListen();
 	
 	set_sleep_mode(SLEEP_MODE_IDLE);
@@ -82,6 +101,7 @@ int main(void)
 		lcdLocate(1, 0);
 		lcdPrint(&m_sendQueueSize, normal);
 		lcdRamPrint(SStr(sendBufferEnd - sendBufferBegin), normal);
+		lcdPrintChar(' ', normal);
 		
 		lcdLocate(2, 0);
 		switch (state) {
@@ -100,6 +120,7 @@ int main(void)
 		lcdLocate(3, 0);
 		lcdPrint(&m_uPacketLen, normal);
 		lcdRamPrint(Str(packageBuffer.rfMsg.msg.length), normal);
+		lcdPrintChar(' ', normal);
 		
 		sleep_mode();
     }

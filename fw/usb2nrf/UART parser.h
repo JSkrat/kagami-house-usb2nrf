@@ -26,9 +26,20 @@
 #define uPPNACK 0xCC
 
 // modem commands
-#define mcStatus 0
-#define mcSetChannel 0x10
-#define mcSetTXPower 0x11
+enum eModemCommand {
+	mcStatus = 0,
+	
+	mcSetChannel = 0x10,
+	mcSetTXPower = 0x11,
+	mcSetBitRate = 0x12,
+	mcSetAutoRetransmitDelay = 0x13,
+	mcSetAutoRetransmitCount = 0x14,
+	
+	mcClearTX = 0x20,
+	mcClearRX = 0x21,
+	
+	mcListen = 0x30,
+};
 
 typedef enum {
 	usError,
@@ -41,7 +52,7 @@ usState state;
 
 // packets from uart
 union uPackage {
-	uint8_t packageBuffer[(MAC_SIZE + 1 + 32)];
+	uint8_t packageBuffer[(MAC_SIZE + 1 + PAYLOAD_SIZE)];
 	struct {
 		uint8_t address[MAC_SIZE];
 		nRF24L01Message msg;
