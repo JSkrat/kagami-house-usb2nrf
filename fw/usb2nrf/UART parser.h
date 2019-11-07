@@ -16,14 +16,7 @@
 #include "avr-nrf24l01-master/src/nrf24l01.h"
 
 // packet prefixes
-// uart to nrf
-#define uPPU2N 0xFF
-// data packet nrf to uart
-#define uPPN2U 0xEE
-// no ack after send uart to nrf
-#define uPPNTO 0xDD
-// ack after send uart to nrf
-#define uPPNACK 0xCC
+#define uPPProtoVer 0
 
 // modem commands
 enum eModemCommand {
@@ -39,38 +32,45 @@ enum eModemCommand {
 	mcClearRX = 0x21,
 	
 	mcListen = 0x30,
+	
+	mcTransmit = 0x7F,
+	
+	mcAckFromRF = 0xCC,
+	mcReceiveFromRF = 0xEE,
 };
 
 typedef enum {
 	usError,
-	usStart,
-	usPAddressTo,
+	usProtoVer,
+	usCommand,
 	usPDataLength,
 	usPData,
+	usEnd,
 } usState;
-usState state;
 
 // packets from uart
+#define HEADER_SIZE (1 + 1)
 union uPackage {
-	uint8_t packageBuffer[(MAC_SIZE + 1 + PAYLOAD_SIZE)];
+	uint8_t packageBuffer[(HEADER_SIZE + PAYLOAD_SIZE)];
 	struct {
-		uint8_t address[MAC_SIZE];
-		nRF24L01Message msg;
-	} rfMsg;
-};
-union uPackage packageBuffer;
+		enum eModemCommand command;
+		uint8_t payloadSize;
+		uint8_t payload[PAYLOAD_SIZE];
+	} pkg;
+} ;
+//union uPackage packageBuffer;
 
-uint8_t sendBufferBegin;
-uint8_t sendBufferEnd;
+//uint8_t sendBufferBegin;
+//uint8_t sendBufferEnd;
 
-nRF24L01 *rfTransiever;
+//uint16_t badRFPackets;
 
-uint16_t badRFPackets;
-
+void u_init();
 void parse(unsigned char b);
 #define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)
 void uQueueChar(const uint8_t c);
 void uQueueString(const string *data);
+void uSendPacket(union uPackage *packet);
 
 void nListen();
 

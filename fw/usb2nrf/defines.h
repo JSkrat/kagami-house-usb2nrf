@@ -36,9 +36,8 @@
 
 /*** LEDs ***/
 #define portLEDS PORTD
-#define poLED_RED PORTD5
-#define poLED_YELLOW PORTD6
-#define poLED_GREEN PORTD7
+#define poLED_D1 PORTD7
+#define poLED_D2 PORTD6
 
 /*** transiever ***/
 #define MAC_SIZE 5

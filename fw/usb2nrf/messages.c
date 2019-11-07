@@ -8,4 +8,4 @@ const string m_usPAddressTo PROGMEM = { 6, { 'a','d','d','r',0x20, 0x20,  } };
 const string m_usPDataLength PROGMEM = { 6, { 'l','e','n',0x20, 0x20, 0x20,  } };
 const string m_usPData PROGMEM = { 6, { 'd','a','t','a',0x20, 0x20,  } };
 const string m_uPacketLen PROGMEM = { 9, { 'p','a','c','k',' ','l','e','n',0x20,  } };
-const string m_nCarrier PROGMEM = { 8, { 'c','a','r','r','i','e','r',0x20,  } };
+const string m_rEN_RXADDR PROGMEM = { 10, { 'E','N','_','R','X','A','D','D','R',0x20,  } };
