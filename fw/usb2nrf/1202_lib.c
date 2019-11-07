@@ -190,8 +190,8 @@ void lcdInit() {
     LCD_write_byte(0x80+0, 0); // Electronic volume (user contrast, 32 step)
     LCD_write_byte(0x40, 0); // display start address is 0
     // display rotate :)
-    LCD_write_byte(0xA1, 0); // segment driver direction select
-    LCD_write_byte(0xC8, 0); // common driver direction select
+    LCD_write_byte(0xA0, 0); // segment driver direction select (column inversion, A0/A1)
+    LCD_write_byte(0xC0, 0); // common driver direction select (line inversion, C0/C8)
     lcd_x = 0; lcd_y = 0;
     lcdMutex = 0;
 }

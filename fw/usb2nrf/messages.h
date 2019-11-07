@@ -22,6 +22,6 @@ extern const string m_usPAddressTo PROGMEM;
 extern const string m_usPDataLength PROGMEM;
 extern const string m_usPData PROGMEM;
 extern const string m_uPacketLen PROGMEM;
-extern const string m_nCarrier PROGMEM;
+extern const string m_rEN_RXADDR PROGMEM;
 
 #endif // MESSAGES_H_INCLUDED
