@@ -21,6 +21,7 @@
 // modem commands
 enum eModemCommand {
 	mcStatus = 0,
+	mcAddresses = 1,
 	
 	mcSetChannel = 0x10,
 	mcSetTXPower = 0x11,

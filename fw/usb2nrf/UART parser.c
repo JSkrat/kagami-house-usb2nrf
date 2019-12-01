@@ -48,6 +48,12 @@ void u_init() {
 	UCSR0C = (0b00 << UMSEL00) | (0b11 << UCSZ00) | (0b00 << UPM00) | (0 << USBS0);
 	
 	state = usError;
+	ui_subsystem_str(ui_s_uart_packet_fsm, &m_usNotInit, true);
+	// send invalid response to ensure uart settings are ok
+	uQueueChar(0xC0);
+	uQueueChar(0x00);
+	uQueueChar(0x00);
+	U_TRANSMIT_START;
 }
 
 void uQueueChar(const uint8_t c) {
@@ -95,12 +101,26 @@ void processPacket() {
 	union uPackage respBuffer;
 	switch (reqBuffer.pkg.command) {
 		case mcStatus: {
-			respBuffer.pkg.payloadSize = 8;
-			respBuffer.pkg.payload[0] = 0; // protocol version
-			respBuffer.pkg.payload[1] = nRF24L01_get_status(rfTransiever);
-			*((uint16_t*) (respBuffer.pkg.payload+2)) = rfPacketsSent;
-			*((uint16_t*) (respBuffer.pkg.payload+4)) = rfTimeouts;
-			*((uint16_t*) (respBuffer.pkg.payload+6)) = badRFPackets;
+			respBuffer.pkg.payloadSize = 0x13;
+			for (int i = 0x00; i < 0x0A; i++) {
+				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i]), 1);
+			}
+			for (int i = 0x11; i < 0x18; i++) {
+				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x11 + 0x0A]), 1);
+			}
+			//*((uint16_t*) (respBuffer.pkg.payload+1)) = rfPacketsSent;
+			//*((uint16_t*) (respBuffer.pkg.payload+3)) = rfTimeouts;
+			//*((uint16_t*) (respBuffer.pkg.payload+5)) = badRFPackets;
+			break;
+		}
+		case mcAddresses: {
+			respBuffer.pkg.payloadSize = 0x13;
+			nRF24L01_read_register(rfTransiever, 0x0A, &(respBuffer.pkg.payload[0x00]), 5);
+			nRF24L01_read_register(rfTransiever, 0x0B, &(respBuffer.pkg.payload[0x05]), 5);
+			for (int i = 0x0C; i < 0x10; i++) {
+				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x0C + 0x0A]), 1);
+			}
+			nRF24L01_read_register(rfTransiever, 0x10, &(respBuffer.pkg.payload[0x0E]), 5);
 			break;
 		}
 		case mcSetChannel: {
@@ -168,6 +188,7 @@ void processPacket() {
 			break;
 	}
 	// lets queue the answer
+	respBuffer.pkg.command = reqBuffer.pkg.command;
 	uSendPacket(&respBuffer);
 }
 
@@ -224,7 +245,7 @@ void parse(unsigned char b)
 	switch (state) {
 		case usEnd:
 		case usError: {
-			ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
+			//ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
 			break;
 		}
 		case usProtoVer: {
@@ -233,14 +254,14 @@ void parse(unsigned char b)
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usCommand, true);
 			} else {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
+				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorProto, true);
 			}
 			break;
 		}
 		case usCommand: {
 			if (0x80 & b) {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
+				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorCmd, true);
 			} else {
 				reqBuffer.pkg.command = b;
 				state = usPDataLength;
@@ -251,7 +272,7 @@ void parse(unsigned char b)
 		case usPDataLength: {
 			if (PAYLOAD_SIZE + MAC_SIZE <= b) {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
+				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorLength, true);
 				break;
 			}
 			reqBuffer.pkg.payloadSize = b;
