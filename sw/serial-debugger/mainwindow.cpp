@@ -62,10 +62,10 @@ void MainWindow::setCheckBoxValue(QCheckBox *checkbox, bool value)
 }
 
 
-void MainWindow::addMessage(QByteArray from, QString message, QColor background) {
+void MainWindow::addMessage(QByteArray from, QString decorator, QString message, QColor background) {
     this->ui->teConsole->append(
                 QString("<p>&nbsp;</p>"
-                        "<span style='background-color:#%1%2%3;'><span style='font-weight:600; background-color:#%1%2%3;'>Receive from %4 </span></span>"
+                        "<span style='background-color:#%1%2%3;'><span style='font-weight:600; background-color:#%1%2%3;'>%6 %4 </span></span>"
                         "<span style='background-color:#%1%2%3;'><span style='font-family:\"monospace\"; background-color:#%1%2%3;'>%5</span></span>"
                         "")
                 .arg(background.red(), 2, 16, QChar('0'))
@@ -73,23 +73,28 @@ void MainWindow::addMessage(QByteArray from, QString message, QColor background)
                 .arg(background.blue(), 2, 16, QChar('0'))
                 .arg(QString(from.toHex(':')).toUpper())
                 .arg(message)
+                .arg(decorator)
                 );
 }
 
-void MainWindow::addMessage(QByteArray from, QByteArray message, QColor background) {
-    this->addMessage(from, QString(message.toHex(':').toUpper()), background);
+void MainWindow::addMessage(QByteArray from, QString decorator, QByteArray message, QColor background) {
+    this->addMessage(from, decorator, QString(message.toHex(':').toUpper()), background);
 }
 
 void MainWindow::addSendMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, message, QColor::fromRgbF(1, 0.9, 0.9));
+    this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 0.9, 0.9));
 }
 
 void MainWindow::addACKMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, message, QColor::fromRgbF(1, 1, 0.9));
+    this->addMessage(from, "Send to", message, QColor::fromRgbF(1, 1, 0.9));
 }
 
 void MainWindow::addReceiveMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, message, QColor::fromRgbF(0.9, 1, 0.9));
+    this->addMessage(from, "Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
+}
+
+void MainWindow::addEtcMessage(QByteArray from, QString message) {
+    this->addMessage(from, "system message", QString("<i>%1</i>").arg(message), QColor::fromRgbF(0.9, 0.9, 0.9));
 }
 
 void MainWindow::statusUpgrade()
@@ -253,11 +258,20 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         break;
     }
     case mcTransmit: {
-        this->addMessage(response.mid(0, 5), response.mid(5), QColor::fromRgbF(0.9, 0.7, 0.7));
+        this->addEtcMessage(
+                    response.mid(0, 5),
+                    QString("transmission accepted</i> %1<i>").arg(QString(response.mid(5).toHex(':')))
+                    );
         break;
     }
     default: {
         this->ui->statusbar->showMessage(QString("Unknown response %1").arg(static_cast<uint8_t>(response[0]), 2, 16), 5000);
+        this->addEtcMessage(
+                    QByteArray(),
+                    QString("unknown response</i> %1 %2<i>")
+                        .arg(command, 2, 16, QChar('0'))
+                        .arg(QString(response.toHex(':')))
+                    );
         break;
     }
     }
@@ -266,12 +280,18 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
 void MainWindow::serialTimeout(const QString &message)
 {
     this->ui->statusbar->showMessage("Timeout: " + message, 5000);
-}
+    this->addEtcMessage(
+                QByteArray(),
+                QString("serial timeout %1").arg(message)
+                );}
 
 void MainWindow::serialError(const QString &message)
 {
     this->ui->statusbar->showMessage("Error: " + message, 5000);
-}
+    this->addEtcMessage(
+                QByteArray(),
+                QString("serial error %1").arg(message)
+                );}
 
 
 void MainWindow::on_pushButton_clicked()
@@ -288,6 +308,10 @@ void MainWindow::on_checkBox_stateChanged(int arg1)
     }
 }
 
+/**
+ * @brief MainWindow::on_pushButton_2_clicked
+ * send "listen" command
+ */
 void MainWindow::on_pushButton_2_clicked()
 {
     QByteArray pkt;
@@ -296,14 +320,21 @@ void MainWindow::on_pushButton_2_clicked()
         pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
     }
     this->serial.transaction(this->port, 10, pkt);
-    this->addMessage(pkt.mid(1), QString("<i>listen</i>"), QColor::fromRgbF(0.7, 0.9, 0.7));
+    this->addEtcMessage(pkt.mid(1), "listen");
 }
 
+/**
+ * @brief MainWindow::on_pushButton_3_clicked
+ * send "transmit" command
+ */
 void MainWindow::on_pushButton_3_clicked()
 {
     QByteArray pkt;
     pkt.append(mcTransmit);
     for (QString b: this->ui->leAddressTransmitTo->text().split(":")) {
+        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
+    }
+    for (QString b: this->ui->lePayloadToTransmit->text().split(":")) {
         pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
     }
     this->serial.transaction(this->port, 10, pkt);

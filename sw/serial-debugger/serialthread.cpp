@@ -80,7 +80,7 @@ void SerialThread::run()
                         || 0 == (0x80 & responseData[2])
                         || responseData.length() != responseData[3] + 4
                         ) {
-                    emit this->error(tr("Bad response from device"));
+                    emit this->error(QString("Bad response from device (%1)").arg(QString(responseData.toHex(':'))));
                 } else {
                     responseData[2] = responseData[2] & 0x7F;
                     int bytesCut = 2;
@@ -116,7 +116,7 @@ void SerialThread::run()
                         // length can not be so big that we need to stuff it, so length always be at position 3 and 1 byte length
                         if (3 == i) bytesCut++;
                     }
-                    if (error) emit(tr("Response parsing error"));
+                    if (error) emit this->error(tr("Response parsing error"));
                     else {
                         responseData.resize(responseData.length() - bytesCut);
                         emit this->response(static_cast<uint8_t>(responseData[0]), responseData.mid(1));

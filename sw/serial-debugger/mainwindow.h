@@ -19,10 +19,11 @@ public:
     ~MainWindow();
 
     void addSendMessage(QByteArray from, QByteArray message);
-    void addMessage(QByteArray from, QString message, QColor background);
-    void addMessage(QByteArray from, QByteArray message, QColor background);
+    void addMessage(QByteArray from, QString decorator, QString message, QColor background);
+    void addMessage(QByteArray from, QString decorator, QByteArray message, QColor background);
     void addReceiveMessage(QByteArray from, QByteArray message);
     void addACKMessage(QByteArray from, QByteArray message);
+    void addEtcMessage(QByteArray from, QString message);
 public slots:
     void statusUpgrade();
 
