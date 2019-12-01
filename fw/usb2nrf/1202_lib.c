@@ -259,13 +259,13 @@ void lcdPrintChar(uint8_t symbol, tFontStyle style) { // 947 clocks (118us)+
         lcd_x += charWidth;
 }
 
-#define META_PRINT(method, message, style) \
+#define META_PRINT(get_byte_func, message, style) \
     /*unsigned char symbol;*/ \
     int8_t count = 0; \
-	int8_t length = method; \
+	int8_t length = get_byte_func; \
     do { \
 	    message++; \
-	    lcdPrintChar(method, style); \
+	    lcdPrintChar(get_byte_func, style); \
     } while (0 < length-- && LCD_COLUMNS > count++); \
     return count;
 
