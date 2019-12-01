@@ -23,8 +23,8 @@ enum eModemCommand {
 
     mcTransmit = 0x7F,
 
-    mcAckFromRF = 0xCC,
-    mcReceiveFromRF = 0xEE,
+    mcAckFromRF = 0x4C,
+    mcReceiveFromRF = 0x6E,
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -82,11 +82,11 @@ void MainWindow::addMessage(QByteArray from, QString decorator, QByteArray messa
 }
 
 void MainWindow::addSendMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 0.9, 0.9));
+    this->addMessage(from, "Send to", message, QColor::fromRgbF(1, 0.9, 0.9));
 }
 
 void MainWindow::addACKMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "Send to", message, QColor::fromRgbF(1, 1, 0.9));
+    this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 1, 0.9));
 }
 
 void MainWindow::addReceiveMessage(QByteArray from, QByteArray message) {

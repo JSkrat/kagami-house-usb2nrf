@@ -72,55 +72,9 @@ void SerialThread::run()
                 QByteArray responseData = serial.readAll();
                 while (serial.waitForReadyRead(10))
                     responseData += serial.readAll();
-                // unstuff response and cut off frame begin, protocol version and length
-                if (
-                        4 > responseData.length()
-                        || 0xC0 != static_cast<uint8_t>(responseData[0])
-                        || 0x00 != responseData[1]
-                        || 0 == (0x80 & responseData[2])
-                        || responseData.length() != responseData[3] + 4
-                        ) {
-                    emit this->error(QString("Bad response from device (%1)").arg(QString(responseData.toHex(':'))));
-                } else {
-                    responseData[2] = responseData[2] & 0x7F;
-                    int bytesCut = 2;
-                    bool esc = false; bool error = false;
-                    for (int i = bytesCut; i < responseData.length(); i++) {
-                        switch (static_cast<uint8_t>(responseData[i])) {
-                        case 0xDB: {
-                            if (esc) {
-                                error = true;
-                                break;
-                            }
-                            esc = true;
-                            bytesCut++;
-                            break;
-                        }
-                        case 0xDC: {
-                            if (esc) {
-                                responseData[i] = static_cast<char>(0xC0);
-                                esc = false;
-                            }
-                            break;
-                        }
-                        case 0xDD: {
-                            if (esc) {
-                                responseData[i] = static_cast<char>(0xDB);
-                                esc = false;
-                            }
-                            break;
-                        }
-                        }
-                        if (error) break;
-                        if (! esc) responseData[i-bytesCut] = responseData[i];
-                        // length can not be so big that we need to stuff it, so length always be at position 3 and 1 byte length
-                        if (3 == i) bytesCut++;
-                    }
-                    if (error) emit this->error(tr("Response parsing error"));
-                    else {
-                        responseData.resize(responseData.length() - bytesCut);
-                        emit this->response(static_cast<uint8_t>(responseData[0]), responseData.mid(1));
-                    }
+                // unstuff here <--
+                for (char c: responseData) {
+                    this->parseByte(static_cast<uint8_t>(c));
                 }
             } else {
                 emit this->timeout(tr("Wait read response timeout %1")
@@ -141,6 +95,126 @@ void SerialThread::run()
         currentWaitTimeout = this->m_waitTimeout;
         currentRequest = this->m_request;
         this->m_mutex.unlock();
+    }
+}
+
+void SerialThread::parseByte(uint8_t byte) {
+    static bool esc = false;
+    enum eParserState {
+        epsHeader, // 0xC0, for validator
+        epsVersion,
+        epsCommand,
+        epsLength,
+        epsData,
+        epsEnd, // should be at the receiving 0xC0
+        epsError, // silently wait 0xC0 in this state
+    };
+    static eParserState state;
+#define sbyte static_cast<char>(byte)
+    static unsigned int currentPacketLength = 0;
+
+    switch (static_cast<uint8_t>(byte)) {
+    case 0xC0: {
+        esc = false;
+        if (epsError == state) {
+            // ignore, we already emitted signal about that
+        } else if (epsEnd != state) {
+            emit this->error(
+                        QString("Byte unstuffing error: received 0xC0 in not-end state. Buffer contents is %1")
+                        .arg(QString(this->currentResponse.toHex(':')))
+                        );
+        }
+        state = epsHeader;
+        break;
+    }
+    case 0xDB: {
+        if (esc) {
+            emit this->error("Byte unstuffing error, 0xDB twice in a row");
+            state = epsError;
+            return;
+            break;
+        }
+        esc = true;
+        return;
+        break;
+    }
+    case 0xDC: {
+        if (esc) {
+            byte = 0xC0;
+            esc = false;
+        }
+        break;
+    }
+    case 0xDD: {
+        if (esc) {
+            byte = 0xDB;
+            esc = false;
+        }
+        break;
+    }
+    }
+
+    // now lets parse packet itself
+    switch (state) {
+    case epsHeader: {
+        if (0xC0 != byte) {
+            emit this->error("Response parsing error: parser in header state at not 0xC0 byte");
+            state = epsError;
+            return;
+        } else {
+            this->currentResponse.clear();
+            state = epsVersion;
+        }
+        break;
+    }
+    case epsVersion: {
+        if (0x00 != byte) {
+            emit this->error("Response parsing error: protocol version is not 0x00");
+            state = epsError;
+            return;
+        } else {
+            state = epsCommand;
+        }
+        break;
+    }
+    case epsCommand: {
+        if (0 == (0x80 & byte)) {
+            emit this->error("Response parsing error: command in response has msb zero");
+            state = epsError;
+            return;
+        } else {
+            this->currentResponse.append(byte & 0x7F);
+            state = epsLength;
+        }
+        break;
+    }
+    case epsLength: {
+        // no validation for length until end of packet
+        currentPacketLength = byte;
+        state = epsData;
+        break;
+    }
+    case epsData: {
+        // we can validate length here \0/
+        if (static_cast<unsigned int>(this->currentResponse.length()) >= currentPacketLength + 1) {
+            emit this->error("Response parsing error: length is less than bytes received");
+            state = epsError;
+            return;
+        } else {
+            this->currentResponse.append(sbyte);
+            if (static_cast<unsigned int>(this->currentResponse.length()) == currentPacketLength + 1) {
+                emit this->response(static_cast<uint8_t>(this->currentResponse[0]), this->currentResponse.mid(1));
+                // switch to error, because next byte should be either 0xC0 or be ignored
+                state = epsEnd;
+            }
+        }
+        break;
+    }
+    case epsError:
+    case epsEnd: {
+        // silently ignore
+        break;
+    }
     }
 }
 
