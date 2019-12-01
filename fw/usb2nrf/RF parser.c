@@ -40,13 +40,23 @@ void rf_init() {
 	//nListen();
 }
 
+/**
+ * create ack response with given address and garbage ack code in the given pointer
+ * !! ack code should be filled in after creation manually !!
+ * @param packet where to create response packet
+ * @param address ack source address
+ */
 void createUAckResponse(union uPackage *packet, uint8_t *address) {
 	packet->pkg.command = mcAckFromRF;
 	packet->pkg.payloadSize = MAC_SIZE + 1;
 	memcpy(&(packet->pkg.payload), address, MAC_SIZE);
-	packet->pkg.payload[MAC_SIZE] = 0;
 }
 
+/**
+ * check status of transmitted packet and queue according uart packet
+ * ACK with code 0 (ack timeout), code 1 (ack received), no ack payload transmitted yet
+ * and received data packets
+ */
 void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 	nRF24L01Message msg;
 	union uPackage uartPacket;
@@ -58,6 +68,7 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 		nRF24L01_read_register(rfTransiever, TX_ADDR, &pipeAddress, MAC_SIZE);
 		/// TODO check if buffer has enough space for packet
 		createUAckResponse(&(uartPacket), &(pipeAddress[0]));
+		uartPacket.pkg.payload[MAC_SIZE] = 1;
 		uSendPacket(&uartPacket);
 	} else if (0 == txState) {
 		// ack received, tx successful
@@ -65,14 +76,15 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 		nRF24L01_read_register(rfTransiever, TX_ADDR, &pipeAddress, MAC_SIZE);
 		/// TODO check if buffer has enough space for packet
 		createUAckResponse(&(uartPacket), &(pipeAddress[0]));
-		uartPacket.pkg.payload[MAC_SIZE] = 1;
+		uartPacket.pkg.payload[MAC_SIZE] = 0;
 		uSendPacket(&uartPacket);
-		nRF24L01_listen(rfTransiever, 0, &(pipeAddress[0]));
+		//nRF24L01_listen(rfTransiever, 0, &(pipeAddress[0]));
 	}
 	while (nRF24L01_data_received(rfTransiever)) {
 		nRF24L01_read_received_data(rfTransiever, &msg);
 		// assemble packet for uart
 		/// TODO check if buffer has enough space for packet
+		// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
 		nRF24L01_read_register(rfTransiever, RX_ADDR_P1, &pipeAddress, MAC_SIZE);
 		switch (msg.pipe_number) {
 			case 0: {
@@ -80,6 +92,7 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 				break;
 			}
 			case 1: break;
+			// overwrite last byte of address
 			case 2:
 			case 3:
 			case 4:
