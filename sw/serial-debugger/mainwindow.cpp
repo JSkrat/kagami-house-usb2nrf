@@ -249,6 +249,13 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         }
         break;
     }
+    case mcListen: {
+        this->addEtcMessage(
+                    response,
+                    "listening"
+                    );
+        break;
+    }
     case mcAckFromRF: {
         this->addACKMessage(response.mid(0, 5), response.mid(5));
         break;
@@ -261,6 +268,13 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         this->addEtcMessage(
                     response.mid(0, 5),
                     QString("transmission accepted</i> %1<i>").arg(QString(response.mid(5).toHex(':')))
+                    );
+        break;
+    }
+    case mcClearTX: {
+        this->addEtcMessage(
+                    response,
+                    "clear tx ok"
                     );
         break;
     }
@@ -340,4 +354,12 @@ void MainWindow::on_pushButton_3_clicked()
     this->serial.transaction(this->port, 10, pkt);
     this->addSendMessage(pkt.mid(1, 5), pkt.mid(6));
 
+}
+
+void MainWindow::on_pushButton_4_clicked()
+{
+    QByteArray pkt;
+    pkt.append(0x20);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "clear tx queue");
 }
