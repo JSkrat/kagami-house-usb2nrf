@@ -162,6 +162,24 @@ void processPacket() {
 			respBuffer.pkg.payload[0] = 0;
 			break;
 		}
+		case mcSetMode: {
+			respBuffer.pkg.payloadSize = 2;
+			uint8_t newMode = reqBuffer.pkg.payload[0];
+			if (switchRFMode(newMode)) {
+				respBuffer.pkg.payload[0] = 0;
+				respBuffer.pkg.payload[1] = newMode;
+			} else {
+				respBuffer.pkg.payload[0] = 1;
+				respBuffer.pkg.payload[1] = RFMode;
+			}
+			break;
+		}
+		case mcSetMasterAddress: {
+			setMasterAddress((t_address *) reqBuffer.pkg.payload);
+			respBuffer.pkg.payloadSize = 1;
+			respBuffer.pkg.payload[0] = 0;
+			break;
+		}
 		case mcTransmit: {
 			respBuffer.pkg.payloadSize = 1;
 			if (MAC_SIZE > reqBuffer.pkg.payloadSize) {
