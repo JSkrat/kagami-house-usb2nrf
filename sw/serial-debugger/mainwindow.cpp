@@ -21,10 +21,20 @@ enum eModemCommand {
 
     mcListen = 0x30,
 
+    mcSetMode = 0x40,
+    mcSetMasterAddress = 0x41,
+
     mcTransmit = 0x7F,
 
     mcAckFromRF = 0x4C,
     mcReceiveFromRF = 0x6E,
+};
+
+const QHash<enum eModemCommand, QString> responseEtcText = {
+    {mcListen, "listening"},
+    {mcSetMode, "requested mode set (if 0)"},
+    {mcClearTX, "clear TX ok"},
+    {mcSetMasterAddress, "master address set"},
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -105,7 +115,8 @@ void MainWindow::statusUpgrade()
 
 void MainWindow::serialResponse(const uint8_t command, const QByteArray &response)
 {
-    switch (static_cast<enum eModemCommand>(command)) {
+    enum eModemCommand eCommand = static_cast<enum eModemCommand>(command);
+    switch (eCommand) {
     case mcStatus: {
         // modem status
 //        this->ui->statusbar->showMessage(response.toHex(':'));
@@ -249,13 +260,6 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         }
         break;
     }
-    case mcListen: {
-        this->addEtcMessage(
-                    response,
-                    "listening"
-                    );
-        break;
-    }
     case mcAckFromRF: {
         this->addACKMessage(response.mid(0, 5), response.mid(5));
         break;
@@ -271,21 +275,21 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
                     );
         break;
     }
-    case mcClearTX: {
-        this->addEtcMessage(
-                    response,
-                    "clear tx ok"
-                    );
-        break;
-    }
     default: {
-        this->ui->statusbar->showMessage(QString("Unknown response %1").arg(static_cast<uint8_t>(response[0]), 2, 16), 5000);
-        this->addEtcMessage(
-                    QByteArray(),
-                    QString("unknown response</i> %1 %2<i>")
-                        .arg(command, 2, 16, QChar('0'))
-                        .arg(QString(response.toHex(':')))
-                    );
+        if (responseEtcText.keys().contains(eCommand)) {
+            this->addEtcMessage(
+                        response,
+                        responseEtcText[eCommand]
+                        );
+        } else {
+            this->ui->statusbar->showMessage(QString("Unknown response %1").arg(static_cast<uint8_t>(response[0]), 2, 16), 5000);
+            this->addEtcMessage(
+                        QByteArray(),
+                        QString("unknown response</i> %1 %2<i>")
+                            .arg(command, 2, 16, QChar('0'))
+                            .arg(QString(response.toHex(':')))
+                        );
+        }
         break;
     }
     }
@@ -359,7 +363,45 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     QByteArray pkt;
-    pkt.append(0x20);
+    pkt.append(mcClearTX);
     this->serial.transaction(this->port, 10, pkt);
     this->addEtcMessage(pkt, "clear tx queue");
+}
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(2);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Master");
+}
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(1);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Slave");
+}
+
+void MainWindow::on_pushButton_7_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(static_cast<char>(0));
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Debug");
+}
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMasterAddress);
+    for (QString b: this->ui->leAddressListen->text().split(":")) {
+        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
+    }
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt.mid(1), "set master address");
 }
