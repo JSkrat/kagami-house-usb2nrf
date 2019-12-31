@@ -6,3 +6,5 @@ fw/usb2nrf/Debug
 fw/usb2nrf/\.vs$
 fw/.*\.xml$
 
+sw/build*
+
