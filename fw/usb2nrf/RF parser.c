@@ -3,7 +3,7 @@
  *
  * Created: 03.11.2019 19:17:51
  *  Author: Mintytail
- */ \
+ */
 #include "RF parser.h"
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
@@ -14,6 +14,8 @@
 void checkTransieverRXBuf(/*const bool listenAfterwards*/);
 
 nRF24L01 *rfTransiever;
+eRFMode RFMode;
+t_address MasterAddress;
 
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
@@ -33,10 +35,14 @@ void rf_init() {
 	rfTransiever->ce.port = &portTransiever; rfTransiever->ce.pin = PORTB2;
 	rfTransiever->mosi.port = &portTransiever; rfTransiever->mosi.pin = PORTB3;
 	rfTransiever->mosi.port = &portTransiever; rfTransiever->miso.pin = PORTB4;
+	// turn on pull-up for miso, to increase spi speed, maybe
+	// internal pull up resistor is 20k to 50k
+	PORTB |= _BV(rfTransiever->miso.pin);
 	rfTransiever->sck.port = &portTransiever; rfTransiever->sck.pin = PORTB5;
 	nRF24L01_begin(rfTransiever);
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
+	RFMode = rmIdle;
 	//nListen();
 }
 
@@ -50,6 +56,7 @@ void createUAckResponse(union uPackage *packet, uint8_t *address) {
 	packet->pkg.command = mcAckFromRF;
 	packet->pkg.payloadSize = MAC_SIZE + 1;
 	memcpy(&(packet->pkg.payload), address, MAC_SIZE);
+	packet->pkg.payload[MAC_SIZE] = 0;
 }
 
 /**
@@ -117,4 +124,34 @@ void nListen(t_address *address) {
 
 void transmitPacket(tRfPacket *packet) {
 	nRF24L01_transmit(rfTransiever, packet->address, &(packet->msg));
+}
+
+bool switchRFMode(eRFMode newMode) {
+	if (rmBad <= newMode) {
+		return false;
+	};
+	RFMode = newMode;
+	switch (RFMode) {
+		case rmIdle: {
+			break;
+		}
+		case rmSlave: {
+			// start listen here
+			break;
+		}
+		case rmMaster: {
+			break;
+		}
+		default:
+			break;
+	}
+	return true;
+};
+
+void setMasterAddress(t_address *address) {
+	// write address and re-listen if we're slave
+	memcpy(MasterAddress, *address, MAC_SIZE);
+	if (rmSlave == RFMode) {
+		switchRFMode(RFMode);
+	}
 }

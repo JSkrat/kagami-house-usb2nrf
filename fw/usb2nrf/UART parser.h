@@ -34,6 +34,9 @@ enum eModemCommand {
 	
 	mcListen = 0x30,
 	
+	mcSetMode = 0x40,
+	mcSetMasterAddress = 0x41,
+	
 	mcTransmit = 0x7F,
 	
 	mcAckFromRF = 0xCC,

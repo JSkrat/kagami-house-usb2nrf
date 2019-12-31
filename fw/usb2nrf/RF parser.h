@@ -21,10 +21,22 @@ typedef struct {
 	nRF24L01Message msg;
 } tRfPacket;
 
+typedef enum {
+	rmIdle = 0,
+	rmSlave = 1,
+	rmMaster = 2,
+	rmBad,
+} eRFMode;
+
+extern eRFMode RFMode;
+//extern t_address MasterAddress;
+
 void rf_init();
 void checkTransieverRXBuf();
 void transmitPacket(tRfPacket *packet);
 void nListen(t_address *address);
+bool switchRFMode(eRFMode newMode);
+void setMasterAddress(t_address *address);
 
 
 
