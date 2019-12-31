@@ -174,8 +174,8 @@ void processPacket() {
 			}
 			break;
 		}
-		case mcSetMasterAddress: {
-			setMasterAddress((t_address *) reqBuffer.pkg.payload);
+		case mcSetListenAddress: {
+			setListenAddress((t_address *) reqBuffer.pkg.payload);
 			respBuffer.pkg.payloadSize = 1;
 			respBuffer.pkg.payload[0] = 0;
 			break;

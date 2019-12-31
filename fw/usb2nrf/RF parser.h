@@ -36,7 +36,7 @@ void checkTransieverRXBuf();
 void transmitPacket(tRfPacket *packet);
 void nListen(t_address *address);
 bool switchRFMode(eRFMode newMode);
-void setMasterAddress(t_address *address);
+void setListenAddress(t_address *address);
 
 
 

@@ -22,7 +22,7 @@ enum eModemCommand {
     mcListen = 0x30,
 
     mcSetMode = 0x40,
-    mcSetMasterAddress = 0x41,
+    mcSetListenAddress = 0x41,
 
     mcTransmit = 0x7F,
 
@@ -34,7 +34,7 @@ const QHash<enum eModemCommand, QString> responseEtcText = {
     {mcListen, "listening"},
     {mcSetMode, "requested mode set (if 0)"},
     {mcClearTX, "clear TX ok"},
-    {mcSetMasterAddress, "master address set"},
+    {mcSetListenAddress, "master address set"},
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -398,7 +398,7 @@ void MainWindow::on_pushButton_7_clicked()
 void MainWindow::on_pushButton_8_clicked()
 {
     QByteArray pkt;
-    pkt.append(mcSetMasterAddress);
+    pkt.append(mcSetListenAddress);
     for (QString b: this->ui->leAddressListen->text().split(":")) {
         pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
     }
