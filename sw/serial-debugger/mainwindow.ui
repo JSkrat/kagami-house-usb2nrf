@@ -781,6 +781,12 @@ Shockburst</string>
        <height>19</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Count lost packets</string>
+     </property>
+     <property name="whatsThis">
+      <string>Count lost packets</string>
+     </property>
      <property name="text">
       <string>PLOS_CNT</string>
      </property>
@@ -796,6 +802,12 @@ Shockburst</string>
        <width>131</width>
        <height>19</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Count retransmitted packets</string>
+     </property>
+     <property name="whatsThis">
+      <string>Count retransmitted packets</string>
      </property>
      <property name="text">
       <string>ARC_CNT</string>
@@ -813,6 +825,9 @@ Shockburst</string>
       <width>151</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Received power detector (carrier detect)</string>
     </property>
     <property name="title">
      <string>RPD 09</string>
@@ -842,6 +857,9 @@ Shockburst</string>
       <width>151</width>
       <height>161</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Number of bytes in RX payload</string>
     </property>
     <property name="title">
      <string>RX_PW 11 --- 16</string>
@@ -1044,6 +1062,9 @@ Shockburst</string>
       <width>151</width>
       <height>161</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Enable dynamic payload length</string>
     </property>
     <property name="title">
      <string>DYNPD 1C</string>
@@ -1544,7 +1565,7 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>560</y>
+       <y>570</y>
        <width>211</width>
        <height>31</height>
       </rect>
@@ -1557,7 +1578,7 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>230</x>
-       <y>560</y>
+       <y>570</y>
        <width>112</width>
        <height>34</height>
       </rect>
@@ -1570,7 +1591,7 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>630</y>
+       <y>640</y>
        <width>331</width>
        <height>31</height>
       </rect>
@@ -1583,7 +1604,7 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>600</y>
+       <y>610</y>
        <width>141</width>
        <height>19</height>
       </rect>
@@ -1603,6 +1624,84 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="text">
       <string>Clear TX queue</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_5">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>170</y>
+       <width>171</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Set mode &quot;Master&quot;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_6">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>210</y>
+       <width>171</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Set mode &quot;Slave&quot;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_7">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>250</y>
+       <width>171</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Set mode &quot;Debug&quot;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_8">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>520</y>
+       <width>171</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Set master address</string>
+     </property>
+    </widget>
+    <widget class="Line" name="line">
+     <property name="geometry">
+      <rect>
+       <x>380</x>
+       <y>510</y>
+       <width>118</width>
+       <height>3</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="Line" name="line_2">
+     <property name="geometry">
+      <rect>
+       <x>17</x>
+       <y>560</y>
+       <width>481</width>
+       <height>3</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </widget>
