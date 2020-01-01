@@ -17,6 +17,16 @@ void parseRFPacket(tRfPacket *pkg);
 nRF24L01 *rfTransiever;
 eRFMode RFMode;
 t_address ListenAddress;
+uint8_t lastReceivedTransacrionId;
+
+enum eRFError {
+	ereNone = 0,
+	ereBadVersion = 0x10,
+	ereBadUnitId = 0x20,
+	ereNotConsecutiveTransactionId = 0x30,
+	ereSameTransactionId = 0x31,
+	ereBadFunctionId = 0x40,
+};
 
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
@@ -44,6 +54,8 @@ void rf_init() {
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
 	RFMode = rmIdle;
+	lastReceivedTransacrionId = 0;
+	// if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 	//nListen();
 }
 
@@ -174,33 +186,38 @@ void setListenAddress(t_address *address) {
 	}
 }
 
-void parseRFPacket(tRfPacket *pkg) {
-	// this will parse RF packet-request and do action to make a response
-	enum eRFStates {
-		erfVersion,
-		erfUnitId,
-		erfTransactionId,
-		erfNextRFChannel,
-		erfFuncId,
-		erfData,
-		erfError,
-	} state = erfVersion;
-	//uint8_t *parsePointer = &(pkg->msg.data[0]);
-	uint8_t index = 0;
-	while (index < pkg->msg.length) {
-		switch (state) {
-		case erfError: {
-			// make response "bad packet"
-		}
-		case erfVersion: {
-			if (0 == pkg->msg.data[index]) {
-				index++;
-				state = erfUnitId;
-			} else {
-				state = erfError;
-			}
-			break;
-		}
-		}
+enum eRFError validatePacket(tRfPacket *pkg) {
+	//enum eRFError RFError = ereNone;
+	if (0 != pkg->msg.data[RF_VERSION]) {
+		return ereBadVersion;
 	}
+	if (lastReceivedTransacrionId == pkg->msg.data[RF_TRANSACTION_ID]) {
+		return ereSameTransactionId;
+	} else if (lastReceivedTransacrionId+1 != pkg->msg.data[RF_TRANSACTION_ID]) {
+		return ereNotConsecutiveTransactionId;
+	}
+	// only basic check if unit 0 functions called for not unit 0 and vice versa
+	if ((0 == pkg->msg.data[RF_UNIT_ID]) != (0x10 > pkg->msg.data[RF_FUNCTION_ID])) {
+		return ereBadFunctionId;
+	}
+	return ereNone;
+}
+
+void parseRFPacket(tRfPacket *pkg) {
+	enum eRFError validation = validatePacket(pkg);
+	tRfPacket response;
+	// copy address, version, transaction id
+	memcpy(&response, pkg, sizeof(tRfPacket)); // should be 39 bytes
+	// minimum response size if 3 bytes: version, transaction id, response code
+	response.msg.length = 3;
+	response.msg.data[RF_RESP_CODE] = validation;
+	if (ereNone == validation) {
+		// process packet here
+	} else {
+		// generate error response
+		// but since there are no data for error messages, we're done)
+	}
+	transmitPacket(&response);
+	// after that we're waiting for either ack from master or ack timeout
+	// next action will be there
 }
