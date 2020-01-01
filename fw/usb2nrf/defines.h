@@ -46,4 +46,17 @@
 #define portTransiever PORTB
 #define poTransiever_IRQ PORTB0
 
+/*** RF packet ***/
+
+#define RF_VERSION 0
+#define RF_TRANSACTION_ID 1
+// request-related
+#define RF_UNIT_ID 2
+#define RF_NEXT_CHANNEL 3
+#define RF_FUNCTION_ID 4
+#define RF_DATA 5
+// response-related
+#define RF_RESP_CODE 2
+#define RF_RESP_DATA 3
+
 #endif /* DEFINES_H_ */
