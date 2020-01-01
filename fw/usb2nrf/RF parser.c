@@ -24,7 +24,6 @@ enum eRFError {
 	ereBadVersion = 0x10,
 	ereBadUnitId = 0x20,
 	ereNotConsecutiveTransactionId = 0x30,
-	ereSameTransactionId = 0x31,
 	ereBadFunctionId = 0x40,
 };
 
@@ -191,9 +190,7 @@ enum eRFError validatePacket(tRfPacket *pkg) {
 	if (0 != pkg->msg.data[RF_VERSION]) {
 		return ereBadVersion;
 	}
-	if (lastReceivedTransacrionId == pkg->msg.data[RF_TRANSACTION_ID]) {
-		return ereSameTransactionId;
-	} else if (lastReceivedTransacrionId+1 != pkg->msg.data[RF_TRANSACTION_ID]) {
+	if (lastReceivedTransacrionId+1 != pkg->msg.data[RF_TRANSACTION_ID]) {
 		return ereNotConsecutiveTransactionId;
 	}
 	// only basic check if unit 0 functions called for not unit 0 and vice versa
@@ -211,11 +208,19 @@ void parseRFPacket(tRfPacket *pkg) {
 	// minimum response size if 3 bytes: version, transaction id, response code
 	response.msg.length = 3;
 	response.msg.data[RF_RESP_CODE] = validation;
-	if (ereNone == validation) {
-		// process packet here
-	} else {
-		// generate error response
-		// but since there are no data for error messages, we're done)
+	switch (validation) {
+		case ereNone: {
+			// process packet here
+			break;
+		}
+		case ereNotConsecutiveTransactionId: {
+			response.msg.length++;
+			response.msg.data[RF_RESP_DATA] = lastReceivedTransacrionId;
+			break;
+		}
+		default: {
+			break;
+		}
 	}
 	transmitPacket(&response);
 	// after that we're waiting for either ack from master or ack timeout
