@@ -30,6 +30,7 @@ typedef enum {
 
 extern eRFMode RFMode;
 //extern t_address MasterAddress;
+extern uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
 
 void rf_init();
 void checkTransieverRXBuf();
