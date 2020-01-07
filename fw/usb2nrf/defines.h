@@ -46,7 +46,9 @@
 #define portTransiever PORTB
 #define poTransiever_IRQ PORTB0
 
-/*** RF packet ***/
+/** RF packet **/
+/*** encryption ***/
+#define RF_ENC_TOTAL 1
 
 #define RF_VERSION 0
 #define RF_TRANSACTION_ID 1
@@ -57,6 +59,22 @@
 #define RF_DATA 5
 // response-related
 #define RF_RESP_CODE 2
+// data is the last field, so its starting is minimal length of the packet, used in "RF parser.c"
 #define RF_RESP_DATA 3
+// data packet available length
+#define RF_RESP_DATA_LENGTH (PAYLOAD_SIZE - RF_RESP_DATA - RF_ENC_TOTAL)
+
+/*** common response codes ***/
+#define C_OK 0
+#define C_NOT_IMPLEMENTED 0x7F
+#define C_BAD_REQUEST_DATA 0xE0
+/*** custom (per-function) error codes ***/
+// set address
+#define C_AD_BAD_LENGTH 1
+// read/write channel
+#define C_CH_BAD_CHANNELS 1
+#define C_CH_RESPONSE_TOO_BIG 2
+#define C_CH_BAD_PERMISSIONS 3
+#define C_CH_VALIDATION_FAILED 4
 
 #endif /* DEFINES_H_ */

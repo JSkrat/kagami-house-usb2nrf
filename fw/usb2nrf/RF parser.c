@@ -10,6 +10,7 @@
 #include "UART parser.h"
 #include <avr/interrupt.h>
 #include <string.h>
+#include "functions.h"
 
 void checkTransieverRXBuf(/*const bool listenAfterwards*/);
 void parseRFPacket(tRfPacket *pkg);
@@ -18,14 +19,17 @@ nRF24L01 *rfTransiever;
 eRFMode RFMode;
 t_address ListenAddress;
 uint8_t lastReceivedTransacrionId;
+uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
 
 enum eRFError {
 	ereNone = 0,
-	ereBadVersion = 0x10,
-	ereBadUnitId = 0x20,
-	ereNotConsecutiveTransactionId = 0x30,
-	ereBadFunctionId = 0x40,
-};
+	ereBadVersion = 0x90,
+	ereBadUnitId = 0xA0,
+	ereNotConsecutiveTransactionId = 0xB0,
+	ereBadFunctionId = 0xC0,
+	ereResponseTooBig = 0xD0,
+	
+} lastSentPacketStatus;
 
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
@@ -56,6 +60,11 @@ void rf_init() {
 	lastReceivedTransacrionId = 0;
 	// if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 	//nListen();
+	total_requests = 0;
+	ok_responses = 0;
+	error_responses = 0;
+	transaction_errors = 0;
+	ack_timeouts = 0;
 }
 
 /**
@@ -85,7 +94,7 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 	int txState = nRF24L01_transmit_success(rfTransiever);
 	if (-1 == txState) {
 		// no ack received n times
-		//rfTimeouts++;
+		ack_timeouts++;
 		if (rmIdle == RFMode || rmMaster == RFMode) {
 			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
 			/// TODO check if buffer has enough space for packet
@@ -99,6 +108,18 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 	} else if (0 == txState) {
 		// ack received, tx successful
 		//rfPacketsSent++;
+		switch (lastSentPacketStatus) {
+			case ereNotConsecutiveTransactionId: {
+				transaction_errors++;
+			}
+			default: {
+				if (0x80 > lastSentPacketStatus) {
+					ok_responses++;
+				} else {
+					error_responses++;
+				}
+			}
+		}
 		if (rmIdle == RFMode || rmMaster == RFMode) {
 			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
 			/// TODO check if buffer has enough space for packet
@@ -133,6 +154,7 @@ void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
 				break;
 			}
 		}
+		total_requests++;
 		if (rmIdle == RFMode || rmMaster == RFMode) {
 			uartPacket.pkg.command = mcReceiveFromRF;
 			uartPacket.pkg.payloadSize = MAC_SIZE + request.msg.length;
@@ -197,6 +219,10 @@ enum eRFError validatePacket(tRfPacket *pkg) {
 	if ((0 == pkg->msg.data[RF_UNIT_ID]) != (0x10 > pkg->msg.data[RF_FUNCTION_ID])) {
 		return ereBadFunctionId;
 	}
+	// check if unit exists
+	if (UNITS_LENGTH <= pkg->msg.data[RF_UNIT_ID]) {
+		return ereBadUnitId;
+	}
 	return ereNone;
 }
 
@@ -206,11 +232,28 @@ void parseRFPacket(tRfPacket *pkg) {
 	// copy address, version, transaction id
 	memcpy(&response, pkg, sizeof(tRfPacket)); // should be 39 bytes
 	// minimum response size if 3 bytes: version, transaction id, response code
-	response.msg.length = 3;
+	// data is the last field, so its starting is minimal length of the packet
+	response.msg.length = RF_RESP_DATA;
 	response.msg.data[RF_RESP_CODE] = validation;
 	switch (validation) {
 		case ereNone: {
 			// process packet here
+			fRFFunction method = pgm_read_ptr_near(RFFunctions[pkg->msg.data[RF_FUNCTION_ID]]);
+			if (NULL == method) {
+				response.msg.data[RF_RESP_CODE] = ereBadFunctionId;
+				break;
+			}
+			response.msg.data[RF_RESP_CODE] = (*method)(
+				pkg->msg.data[RF_UNIT_ID],
+				(string*) &(pkg->msg.data[RF_DATA]), 
+				(string*) &(response.msg.data[RF_RESP_DATA])
+			);
+			// check here for the max length of data to fit into packet
+			if (RF_RESP_DATA_LENGTH < response.msg.length) {
+				response.msg.data[RF_RESP_CODE] = ereResponseTooBig;
+				// data is the last field, so its starting is minimal length of the packet
+				response.msg.length = RF_RESP_DATA;
+			}
 			break;
 		}
 		case ereNotConsecutiveTransactionId: {
@@ -222,6 +265,7 @@ void parseRFPacket(tRfPacket *pkg) {
 			break;
 		}
 	}
+	lastSentPacketStatus = response.msg.data[RF_RESP_CODE];
 	transmitPacket(&response);
 	// after that we're waiting for either ack from master or ack timeout
 	// next action will be there
