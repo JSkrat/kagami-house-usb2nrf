@@ -10,7 +10,9 @@
 #define UART_PARSER_H_
 #include "defines.h"
 #include <stdint.h>
-#include <avr/pgmspace.h>
+#ifndef UNIT_TESTING
+    #include <avr/pgmspace.h>
+#endif
 #include "messages.h"
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"

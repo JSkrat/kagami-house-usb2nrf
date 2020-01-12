@@ -8,6 +8,7 @@
 
 #ifndef FUNCTIONS_H_
 #define FUNCTIONS_H_
+
 #include "messages.h"
 #include <stdbool.h>
 

@@ -6,7 +6,13 @@
  */ 
 
 #include "functions.h"
-#include "messages.h"
+
+#ifndef UNIT_TESTING
+    #include "messages.h"
+    #include <avr/pgmspace.h>
+#else
+
+#endif
 #include "RF parser.h"
 #include <stdbool.h>
 #include <string.h>
@@ -122,7 +128,7 @@ uint8_t setMACAddress(uint8_t unit, string *request, string *response) {
 
 uint8_t getRFStatistics(uint8_t unit, string *request, string *response) {
 	response->length = 10;
-	#define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = value << 8;
+    #define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = ((uint16_t)value) << 8
 	STORE_16(0, total_requests);
 	STORE_16(2, ok_responses);
 	STORE_16(4, error_responses);
