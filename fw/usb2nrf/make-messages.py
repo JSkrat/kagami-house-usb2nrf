@@ -64,7 +64,12 @@ h_output.write('''
 #ifndef ''' + filename + '''_H_INCLUDED
 #define ''' + filename + '''_H_INCLUDED
 
-#include <avr/pgmspace.h>
+#ifndef UNIT_TESTING
+    #include <avr/pgmspace.h>
+#else
+    #include "../usb2nrf_tests/tests.h"
+#endif
+#include <stdint.h>
 
 typedef struct {
 	uint8_t length;
