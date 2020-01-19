@@ -21,7 +21,7 @@ bool switches[5];
 bool relays[2];
 uint16_t analog_output;
 
-const PROGMEM sChannel switchChannels[] = {
+const sChannel switchChannels[] PROGMEM = {
 	{
 		.dataType = eCDTBit,
 		.value = {&switches[0]}
@@ -44,7 +44,7 @@ const PROGMEM sChannel switchChannels[] = {
 	},
 };
 
-const PROGMEM sChannel outputChannels[] = {
+const sChannel outputChannels[] PROGMEM = {
 	{
 		.dataType = eCDTBit,
 		.value = {&relays[0]}
@@ -59,7 +59,7 @@ const PROGMEM sChannel outputChannels[] = {
 	},
 };
 
-const PROGMEM sUnit units[UNITS_LENGTH] = {
+const sUnit units[UNITS_LENGTH] PROGMEM = {
 	{
 		.type = eUTSSwitch,
 		.channelsROLength = 1,
@@ -105,19 +105,24 @@ uint8_t setSessionKey(uint8_t unit, string *request, string *response) {
 }
 
 uint8_t getListOfUnits(uint8_t unit, string *request, string *response) {
+    (void) unit;
+    (void) request;
 	response->length = 1 + 4*UNITS_LENGTH;
 	response->data[0] = UNITS_LENGTH;
 	for (int i = 0; i < UNITS_LENGTH; i++) {
 		uint8_t base = 1 + 4*i;
-		response->data[base+0] = units[i].type;
-		response->data[base+1] = units[i].channelsROLength;
-		response->data[base+2] = units[i].channelsWOLength;
-		response->data[base+3] = units[i].channelsRWLength;
+        response->data[base+0] = pgm_read_byte(&(units[i].type));
+        response->data[base+1] = pgm_read_byte(&(units[i].channelsROLength));
+        response->data[base+2] = pgm_read_byte(&(units[i].channelsWOLength));
+        response->data[base+3] = pgm_read_byte(&(units[i].channelsRWLength));
 	}
 	return C_OK;
 }
 
 uint8_t setMACAddress(uint8_t unit, string *request, string *response) {
+    (void) unit;
+    (void) response;
+//    response->length = 0;
 	if (5 == request->length) {
 		setListenAddress((t_address*) request->data);	
 		return C_OK;
@@ -127,8 +132,10 @@ uint8_t setMACAddress(uint8_t unit, string *request, string *response) {
 }
 
 uint8_t getRFStatistics(uint8_t unit, string *request, string *response) {
+    (void) unit;
+    (void) request;
 	response->length = 10;
-    #define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = ((uint16_t)value) << 8
+    #define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = ((uint16_t)value) >> 8
 	STORE_16(0, total_requests);
 	STORE_16(2, ok_responses);
 	STORE_16(4, error_responses);
@@ -139,7 +146,13 @@ uint8_t getRFStatistics(uint8_t unit, string *request, string *response) {
 
 uint8_t getPropertiesOfUnit(uint8_t unit, string *request, string *response) {
 	response->length = 13;
-	response->data[0] = units[unit].type;
+    response->data[0] = pgm_read_byte(&(units[unit].type));
+    const uint8_t ro_num = pgm_read_byte(&(units[unit].channelsROLength));
+    const uint8_t wo_num = pgm_read_byte(&(units[unit].channelsWOLength));
+    const uint8_t rw_num = pgm_read_byte(&(units[unit].channelsRWLength));
+    const sChannel *ro_ch = pgm_read_ptr(&(units[unit].channelsRO));
+    const sChannel *wo_ch = pgm_read_ptr(&(units[unit].channelsWO));
+    const sChannel *rw_ch = pgm_read_ptr(&(units[unit].channelsRW));
 	for (int i = 0; i < 4; i++) {
 		uint8_t ro = 0;
 		uint8_t wo = 0;
@@ -149,12 +162,12 @@ uint8_t getPropertiesOfUnit(uint8_t unit, string *request, string *response) {
 			ro <<= 2;
 			wo <<= 2;
 			rw <<= 2;
-			if (units[unit].channelsROLength > index)
-				ro |= units[unit].channelsRO[index].dataType;
-			if (units[unit].channelsWOLength > index)
-				wo |= units[unit].channelsWO[index].dataType;
-			if (units[unit].channelsRWLength > index)
-				rw |= units[unit].channelsRW[index].dataType;
+            if (ro_num > index)
+                ro |= pgm_read_byte(&(ro_ch[index].dataType));
+            if (wo_num > index)
+                wo |= pgm_read_byte(&(wo_ch[index].dataType));
+            if (rw_num > index)
+                rw |= pgm_read_byte(&(rw_ch[index].dataType));
 		}
 		response->data[1 + i + 4*0] = ro;
 		response->data[1 + i + 4*1] = wo;
@@ -250,6 +263,7 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
 	[eFGetTextDescription] = &getTextDescription,
 	[eFSetTextDescription] = &setTextDescription,
 	
-	[eFReadUnitChannel] = &readUnitChannel,
-	[eFWriteUnitChannel] = &writeUnitChannel,
+    [eFReadUnitChannels] = &readUnitChannel,
+    [eFWriteUnitChannels] = &writeUnitChannel,
+    [eFReadSingleUnitChannel] = &_readSingleUnitChannel,
 };

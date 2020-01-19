@@ -8,19 +8,12 @@ QMAKE_CXXFLAGS += -std=c++17
 
 DEFINES += 'UNIT_TESTING=1'
 
-isEmpty(BOOST_INCLUDE_DIR): BOOST_INCLUDE_DIR=$$(BOOST_INCLUDE_DIR)
-!isEmpty(BOOST_INCLUDE_DIR): INCLUDEPATH *= $${BOOST_INCLUDE_DIR}
-
-isEmpty(BOOST_INCLUDE_DIR): {
-    message("BOOST_INCLUDE_DIR is not set, assuming Boost can be found automatically in your system")
-}
-
 SOURCES += \
-    tests.cpp \
     "RFParser.c" \
     ../usb2nrf/functions.c \
     main.cpp \
-    ../usb2nrf/messages.c
+    ../usb2nrf/messages.c \
+    tests.c
 
 HEADERS += \
     "../usb2nrf/RF parser.h" \
@@ -34,3 +27,8 @@ HEADERS += \
 
 #OBJECTS = $$quote($$OBJECTS)
 #OBJECTS += '"debug/RF parser.o"'
+OBJECTS += '../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib/libgtestd.a'
+LIBS += '-lgtest'
+#OBJECTS += '../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib/libgtest_maind.a'
+INCLUDEPATH += '../../../googletest/googletest/include'
+
