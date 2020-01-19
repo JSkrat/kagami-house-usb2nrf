@@ -24,8 +24,9 @@ typedef enum {
 	eFGetTextDescription = 0x11,
 	eFSetTextDescription = 0x12,
 	
-	eFReadUnitChannel = 0x20,
-	eFWriteUnitChannel = 0x21,
+        eFReadUnitChannels = 0x20,
+        eFWriteUnitChannels = 0x21,
+        eFReadSingleUnitChannel = 0x22,
 	// last item to get length of the array
 	_eFCount
 } eFunctions;
@@ -63,11 +64,13 @@ typedef enum {
 	eUTSCustom = 0x00,
 	eUTSSwitch = 0x01,
 	eUTSAnalog = 0x02,
+        eUTSLast,
 	
 	eUTACustom = 0x40,
 	eUTARelay  = 0x41,
 	eUTAAnalog = 0x42,
 	eUTARGB    = 0x43,
+        eUTALast
 } eUnitType;
 
 // 10 bytes long
@@ -81,6 +84,6 @@ typedef struct {
 	const sChannel *channelsRW;
 } sUnit;
 
-extern const PROGMEM sUnit units[];
+extern const sUnit PROGMEM units[];
 
 #endif /* FUNCTIONS_H_ */

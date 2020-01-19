@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define PROGMEM __attribute__ ((section ("text")))
+#define PROGMEM __attribute__((__section__("progmem")))
+//#define const
 
 #ifdef __cplusplus
 extern "C" {

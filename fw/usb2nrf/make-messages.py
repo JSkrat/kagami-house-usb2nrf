@@ -80,7 +80,7 @@ typedef struct {
 #define cCheck   94
 #define cCelsius 96
 
-
+#ifndef UNIT_TESTING
 ''')
 
 c_output.write('#include "messages.h"\n\n')
@@ -96,6 +96,7 @@ for line in open(argv[1], 'r'):
 			data=value,
 		))
 
+h_output.write('\n#endif');
 h_output.write('\n#endif // ' + filename + '_H_INCLUDED\n');
 h_output.close()
 c_output.close()
