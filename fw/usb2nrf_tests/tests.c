@@ -11,7 +11,7 @@ void *pgm_read_ptr_near(void *ptr) {
 }
 
 void *pgm_read_ptr(void *ptr) {
-    return (void *)(~(*(long long int*)(ptr)));
+    return (void *)(~(*(uint64_t*)(ptr)));
 }
 
 uint8_t pgm_read_byte(uint8_t *ptr) {

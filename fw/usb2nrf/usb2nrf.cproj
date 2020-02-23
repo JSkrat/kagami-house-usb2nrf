@@ -184,6 +184,12 @@
     <Compile Include="ui.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="units_structure.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="units_structure.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="make-messages.py">

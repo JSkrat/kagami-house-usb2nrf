@@ -5,6 +5,7 @@ extern "C" {
     #include "defines.h"
     #include "RFparser.h"
 }
+#include "units_structure.h"
 
 extern uint8_t *__start_progmem;
 extern uint8_t *__stop_progmem;
@@ -16,6 +17,8 @@ namespace {
 class FunctionsTest: public ::testing::Test {
 protected:
     void invert_progmem() {
+        /// here we're inverting the whole section so direct access will return not what is there, failing the test
+        /// only allowed access is through pgm_* functions
         uint8_t *iByte = reinterpret_cast<uint8_t*>(&__start_progmem);
         while (iByte < reinterpret_cast<uint8_t*>(&__stop_progmem)) {
             *iByte = ~(*iByte);
@@ -74,6 +77,7 @@ TEST_F(FunctionsTest, TestListOfUnits) {
         EXPECT_GT(16, response->data[base+2]);
         EXPECT_GT(16, response->data[base+3]);
     }
+    free(response);
 }
 
 TEST_F(FunctionsTest, TestSetMacAddress) {
@@ -89,6 +93,8 @@ TEST_F(FunctionsTest, TestSetMacAddress) {
     testMac(0, C_AD_BAD_LENGTH);
     testMac(MAC_SIZE - 1, C_AD_BAD_LENGTH);
     testMac(MAC_SIZE + 1, C_AD_BAD_LENGTH);
+    free(request);
+    free(response);
 }
 
 TEST_F(FunctionsTest, TestGetRFStatistics) {
@@ -113,6 +119,7 @@ TEST_F(FunctionsTest, TestGetRFStatistics) {
     EXPECT_EQ(error_responses, parsedResponse->errors);
     EXPECT_EQ(transaction_errors, parsedResponse->trans_errors);
     EXPECT_EQ(ack_timeouts, parsedResponse->ack_to);
+    free(response);
 }
 
 TEST_F(FunctionsTest, TestGetPropertiesOfUnit) {
@@ -122,40 +129,110 @@ TEST_F(FunctionsTest, TestGetPropertiesOfUnit) {
     ASSERT_EQ(C_OK, (*(this->getFunction(eFGetListOfUnits)))(0, nullptr, u_response));
     ASSERT_LT(0, u_response->length) << "list of units response is empty";
     ASSERT_LT(0, u_response->data[0]) << "there are no units in a given device";
-    for (uint8_t u = 0; u < u_response->data[0]; u++) {
-        const uint8_t u_base = 1 + 4*u;
-        const uint8_t type = u_response->data[u_base];
-        const uint8_t num_ro = u_response->data[u_base+1];
-        const uint8_t num_wo = u_response->data[u_base+2];
-        const uint8_t num_rw = u_response->data[u_base+3];
-        // and now let's check the properties of unit
+//    for (int unit = 0; unit < 256; unit++) {
+    for (uint8_t unit = 0; unit < u_response->data[0]; unit++) {
         string *p_response = reinterpret_cast<string*>(malloc(sizeof(string) + RF_RESP_DATA_LENGTH));
-        EXPECT_EQ(C_OK, (*(this->getFunction(eFGetPropertiesOfUnit)))(u, nullptr, p_response));
-        ASSERT_EQ(1 + 4*3, p_response->length) << "response length should be 1 + 4x3 bytes long" << p_response->length;
-        EXPECT_EQ(type, p_response->data[0]);
-        // at least we could check if non-existent channels have type 00
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (num_ro <= i*4+j) {
-                    EXPECT_EQ(0, (p_response->data[1+(i*1)] >> (j*2)) & 0b11);
-                }
-                if (num_wo <= i*4+j) {
-                    EXPECT_EQ(0, (p_response->data[1+(i*2)] >> (j*2)) & 0b11);
-                }
-                if (num_rw <= i*4+j) {
-                    EXPECT_EQ(0, (p_response->data[1+(i*3)] >> (j*2)) & 0b11);
+        const uint8_t code = (*(this->getFunction(eFGetPropertiesOfUnit)))(unit & 0xFF, nullptr, p_response);
+        // and now let's check the properties of unit
+        if (unit < u_response->data[0]) {
+            const uint8_t u_base = 1 + 4*(unit&0xFF);
+            const uint8_t type = u_response->data[u_base];
+            const uint8_t num_ro = u_response->data[u_base+1];
+            const uint8_t num_wo = u_response->data[u_base+2];
+            const uint8_t num_rw = u_response->data[u_base+3];
+            EXPECT_EQ(C_OK, code);
+            ASSERT_EQ(1 + 4*3, p_response->length) << "response length should be 1 + 4x3 bytes long" << p_response->length;
+            EXPECT_EQ(type, p_response->data[0]);
+            // at least we could check if non-existent channels have type 00
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    if (num_ro <= i*4+j) {
+                        EXPECT_EQ(0, (p_response->data[1+(i*1)] >> (j*2)) & 0b11);
+                    }
+                    if (num_wo <= i*4+j) {
+                        EXPECT_EQ(0, (p_response->data[1+(i*2)] >> (j*2)) & 0b11);
+                    }
+                    if (num_rw <= i*4+j) {
+                        EXPECT_EQ(0, (p_response->data[1+(i*3)] >> (j*2)) & 0b11);
+                    }
                 }
             }
+        } else {
+            // never happen, functions not checking for unit validity, it is in RFParser
+            ASSERT_EQ(C_CH_BAD_CHANNELS, code);
         }
+        free(p_response);
     }
+    free(u_response);
 }
 
 TEST_F(FunctionsTest, TestReadSingleChannel) {
-    // this we're testing accross all units and all channels
-    // but we need a hash table
-    string *request = reinterpret_cast<string*>(malloc(sizeof(string) + 1));
-    request->length = 1;
+    // first let's get list of all units
+    // assuming that function is already tested and working
+    string *u_response = reinterpret_cast<string*>(malloc(sizeof(string) + RF_RESP_DATA_LENGTH));
+    ASSERT_EQ(C_OK, (*(this->getFunction(eFGetListOfUnits)))(0, nullptr, u_response));
+    ASSERT_LT(0, u_response->length) << "list of units response is empty";
+    ASSERT_LT(0, u_response->data[0]) << "there are no units in a given device";
+    // test every channel of each unit
+//    for (int unit = 0; unit < 256; unit++) {
+    for (int unit = 0; unit < UNITS_LENGTH; unit++) {
+        for (uint8_t channel = 0; channel < 0x3F; channel++) {
+            for (uint8_t chType = 0; chType < 4; chType++) {
+                #define MSG "TestReadSingleChannel unit " << static_cast<int>(unit) << \
+                    ", channel " << static_cast<int>(channel) << " (" << static_cast<int>(channel >> 4) << ", " << \
+                    static_cast<int>(channel & 0x0F) << "), testing type " << static_cast<int>(chType) << "\n"
+                string *request = reinterpret_cast<string*>(malloc(RF_RESP_DATA_LENGTH));
+                string *c_response = reinterpret_cast<string*>(malloc(sizeof(string) + RF_RESP_DATA_LENGTH));
+                request->length = 1;
+                request->data[0] = ((chType << 6) & 0xFF) | channel;
+                uint8_t code = (*(this->getFunction(eFReadUnitChannels)))(unit & 0xFF, request, c_response);
 
+                int testIndex = unit * CHANNELS_PER_UNIT + channel;
+                if (channel < CHANNELS_PER_UNIT && testChannels.count(testIndex)) {
+                    // test channel exists
+                    const sChannel ch = testChannels.at(testIndex);
+                    if (ch.dataType == chType) {
+                        ASSERT_EQ(C_OK, code) << MSG << "code not OK";
+                        ASSERT_GT(c_response->length, 1) << MSG << "response length less than 2";
+                        ASSERT_EQ(((chType << 6) & 0xFF) | channel, c_response->data[0]) << MSG << "response channel type not as requested";
+                        switch (ch.dataType) {
+                        case eCDTBit: {
+                            bool should_be = *(ch.value.tBit);
+                            bool is = *(reinterpret_cast<bool*>(&(c_response->data[1])));
+                            EXPECT_EQ(should_be, is)
+                                    << MSG << "boolean value not equals";
+                            break;
+                        }
+                        case eCDTSigned: {
+                            EXPECT_EQ(*(ch.value.tInt), *(reinterpret_cast<int32_t*>(&(c_response->data[1]))))
+                                    << MSG << "int32 value not equals";
+                            break;
+                        }
+                        case eCDTUnsigned: {
+                            EXPECT_EQ(*(ch.value.tUInt), *(reinterpret_cast<uint32_t*>(&(c_response->data[1]))))
+                                    << MSG << "uint32 value not equals";
+                            break;
+                        }
+                        }
+                    } else {
+                        EXPECT_EQ(C_CH_VALIDATION_FAILED, code) << MSG << "code should be 'VALIDATION_FAILED'";
+                        EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at VALIDATION FAILED";
+                    }
+                } else {
+                    if (UNITS_LENGTH > unit && 0x10 <= channel && 0x20 > channel) {
+                        EXPECT_EQ(C_CH_BAD_PERMISSIONS, code) << MSG "code should be BAD PERMISSIONS";
+                        EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at BAD PERMISSIONS";
+                    } else {
+                        EXPECT_EQ(C_CH_BAD_CHANNELS, code) << MSG "code should be BAD CHANNELS";
+                        EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at BAD CHANNELS";
+                    }
+                }
+                free(request);
+                free(c_response);
+            }
+        }
+    }
+    free(u_response);
 }
 
 } //
