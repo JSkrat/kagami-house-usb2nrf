@@ -88,10 +88,10 @@ const sUnit units[UNITS_LENGTH] PROGMEM = {
         type: eUTARelay,
         channelsROLength: 0,
         channelsRO: nullptr,
-        channelsWOLength: 0,
-        channelsWO: nullptr,
-        channelsRWLength: 1,
-        channelsRW: &outputChannels[1]
+        channelsWOLength: 1,
+        channelsWO: &outputChannels[1],
+        channelsRWLength: 0,
+        channelsRW: nullptr
     },//*/
     {
         type: eUTAAnalog,
@@ -111,7 +111,7 @@ const std::unordered_map<int, sChannel> testChannels = {
     {2*CHANNELS_PER_UNIT+1, {eCDTBit, {&switches[3]}}},
     {2*CHANNELS_PER_UNIT+2, {eCDTBit, {&switches[4]}}},
     {3*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {eCDTBit, {&relays[0]}}},
-    {4*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {
+    {4*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*1+0, {
          dataType: eCDTBit,
          value: {tBit: &relays[1]}
      }},
