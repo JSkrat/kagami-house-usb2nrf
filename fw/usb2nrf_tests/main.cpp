@@ -177,9 +177,10 @@ TEST_F(FunctionsTest, TestReadSingleChannel) {
 //    for (int unit = 0; unit < 256; unit++) {
     for (int unit = 0; unit < UNITS_LENGTH; unit++) {
         for (uint8_t channel = 0; channel < 0x3F; channel++) {
+            const uint8_t channelPerm = channel >> 4;
             for (uint8_t chType = 0; chType < 4; chType++) {
                 #define MSG "TestReadSingleChannel unit " << static_cast<int>(unit) << \
-                    ", channel " << static_cast<int>(channel) << " (" << static_cast<int>(channel >> 4) << ", " << \
+                    ", channel " << static_cast<int>(channel) << " (" << static_cast<int>(channelPerm) << ", " << \
                     static_cast<int>(channel & 0x0F) << "), testing type " << static_cast<int>(chType) << "\n"
                 string *request = reinterpret_cast<string*>(malloc(RF_RESP_DATA_LENGTH));
                 string *c_response = reinterpret_cast<string*>(malloc(sizeof(string) + RF_RESP_DATA_LENGTH));
@@ -191,32 +192,37 @@ TEST_F(FunctionsTest, TestReadSingleChannel) {
                 if (channel < CHANNELS_PER_UNIT && testChannels.count(testIndex)) {
                     // test channel exists
                     const sChannel ch = testChannels.at(testIndex);
-                    if (ch.dataType == chType) {
-                        ASSERT_EQ(C_OK, code) << MSG << "code not OK";
-                        ASSERT_GT(c_response->length, 1) << MSG << "response length less than 2";
-                        ASSERT_EQ(((chType << 6) & 0xFF) | channel, c_response->data[0]) << MSG << "response channel type not as requested";
-                        switch (ch.dataType) {
-                        case eCDTBit: {
-                            bool should_be = *(ch.value.tBit);
-                            bool is = *(reinterpret_cast<bool*>(&(c_response->data[1])));
-                            EXPECT_EQ(should_be, is)
-                                    << MSG << "boolean value not equals";
-                            break;
-                        }
-                        case eCDTSigned: {
-                            EXPECT_EQ(*(ch.value.tInt), *(reinterpret_cast<int32_t*>(&(c_response->data[1]))))
-                                    << MSG << "int32 value not equals";
-                            break;
-                        }
-                        case eCDTUnsigned: {
-                            EXPECT_EQ(*(ch.value.tUInt), *(reinterpret_cast<uint32_t*>(&(c_response->data[1]))))
-                                    << MSG << "uint32 value not equals";
-                            break;
-                        }
+                    if (1 != channelPerm) {
+                        if (ch.dataType == chType) {
+                            ASSERT_EQ(C_OK, code) << MSG << "code not OK";
+                            ASSERT_GT(c_response->length, 1) << MSG << "response length less than 2";
+                            ASSERT_EQ(((chType << 6) & 0xFF) | channel, c_response->data[0]) << MSG << "response channel type not as requested";
+                            switch (ch.dataType) {
+                            case eCDTBit: {
+                                bool should_be = *(ch.value.tBit);
+                                bool is = *(reinterpret_cast<bool*>(&(c_response->data[1])));
+                                EXPECT_EQ(should_be, is)
+                                        << MSG << "boolean value not equals";
+                                break;
+                            }
+                            case eCDTSigned: {
+                                EXPECT_EQ(*(ch.value.tInt), *(reinterpret_cast<int32_t*>(&(c_response->data[1]))))
+                                        << MSG << "int32 value not equals";
+                                break;
+                            }
+                            case eCDTUnsigned: {
+                                EXPECT_EQ(*(ch.value.tUInt), *(reinterpret_cast<uint32_t*>(&(c_response->data[1]))))
+                                        << MSG << "uint32 value not equals";
+                                break;
+                            }
+                            }
+                        } else {
+                            EXPECT_EQ(C_CH_VALIDATION_FAILED, code) << MSG << "code should be VALIDATION_FAILED";
+                            EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at VALIDATION FAILED";
                         }
                     } else {
-                        EXPECT_EQ(C_CH_VALIDATION_FAILED, code) << MSG << "code should be 'VALIDATION_FAILED'";
-                        EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at VALIDATION FAILED";
+                        EXPECT_EQ(C_CH_BAD_PERMISSIONS, code) << MSG << "code should be BAD PERMISSIONS";
+                        EXPECT_EQ(0, c_response->length) << MSG << "response length should be 0 at BAD PERMISSIONS";
                     }
                 } else {
                     if (UNITS_LENGTH > unit && 0x10 <= channel && 0x20 > channel) {

@@ -111,19 +111,27 @@ uint8_t setTextDescription(uint8_t unit, string *request, string *response) {
 	return C_NOT_IMPLEMENTED;
 }
 
-uint8_t _readSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *response, uint8_t *responseLength) {
+uint8_t _readWriteSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *data, uint8_t *responseLength, bool isRead) {
 	uint8_t length = 0;
 	sChannel *channels = NULL;
-	//if (1 != request->length) { return C_BAD_REQUEST_DATA; }
 	const eChannelDataType channelDTReq = request >> 6;
     const uint8_t channelNumPerm = request & 0x3F;
     const uint8_t channelNum = channelNumPerm & 0x0F;
 	*responseLength = 0;
     if (0x10 > channelNumPerm) {
-		length = pgm_read_byte(&(units[unit].channelsROLength));
-		channels = pgm_read_ptr(&(units[unit].channelsRO));
+		if (isRead) {
+			length = pgm_read_byte(&(units[unit].channelsROLength));
+			channels = pgm_read_ptr(&(units[unit].channelsRO));
+		} else {
+			return C_CH_BAD_PERMISSIONS;
+		}
     } else if (0x20 > channelNumPerm) {
-		return C_CH_BAD_PERMISSIONS;
+		if (! isRead) {
+			length = pgm_read_byte(&(units[unit].channelsWOLength));
+			channels = pgm_read_ptr(&(units[unit].channelsWO));
+		} else {
+			return C_CH_BAD_PERMISSIONS;
+		}
     } else if (0x30 > channelNumPerm) {
 		length = pgm_read_byte(&(units[unit].channelsRWLength));
 		channels = pgm_read_ptr(&(units[unit].channelsRW));
@@ -135,36 +143,41 @@ uint8_t _readSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *response,
 		return C_CH_BAD_CHANNELS;
 	}
     const eChannelDataType channelDT = pgm_read_byte(&(channels[channelNum].dataType));
-    const void *value = pgm_read_ptr(&(channels[channelNum].value));
+    void *value = pgm_read_ptr(&(channels[channelNum].value));
 	
 	if (channelDTReq != channelDT) {
 		return C_CH_VALIDATION_FAILED;
 	}
 	
-	// validation done, fill up response
-    response[0] = channelDT << 6 | channelNumPerm;
-	if (eCDTArray == channelDT) {
-		uint8_t arrayLength = _dataTypeLength[channelDT] + ((string*) value)->length;
-		memcpy(
-			&(response[1]), 
-			value, 
-			arrayLength
-		);
-		*responseLength = 1 + arrayLength;
+	// validation done
+	if (isRead) {
+		data[0] = channelDT << 6 | channelNumPerm;
+		if (eCDTArray == channelDT) {
+			uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) value)->length;
+			memcpy(&(data[1]), value, arrayRawLength);
+			*responseLength = 1 + arrayRawLength;
+		} else {
+			memcpy(&(data[1]), value, _dataTypeLength[channelDT]);
+			*responseLength = 1 + _dataTypeLength[channelDT];
+		}
 	} else {
-		memcpy(&(response[1]), value, _dataTypeLength[channelDT]);
-		*responseLength = 1 + _dataTypeLength[channelDT];
+		if (eCDTArray == channelDT) {
+			uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) data)->length;
+			memcpy(value, &(data[0]), arrayRawLength);
+			*responseLength = arrayRawLength;
+		} else {
+			memcpy(value, &(data[0]), _dataTypeLength[channelDT]);
+			*responseLength = _dataTypeLength[channelDT];
+		}
 	}
 	return C_OK;	
 }
 
 uint8_t readUnitChannel(uint8_t unit, string *request, string *response) {
     uint8_t length = 0;
-	// copy count
-    //response->data[0] = request->data[0];
     for (int i = 0; i < request->length; i++) {
 		uint8_t valueLength = 0;
-        uint8_t code = _readSingleUnitChannel(unit, request->data[i], (&response->data[length]), &valueLength);
+        uint8_t code = _readWriteSingleUnitChannel(unit, request->data[i], (&response->data[length]), &valueLength, true);
 		length += valueLength;
 		
 		if (C_OK != code) {
@@ -178,7 +191,15 @@ uint8_t readUnitChannel(uint8_t unit, string *request, string *response) {
 }
 
 uint8_t writeUnitChannel(uint8_t unit, string *request, string *response) {
-	return 0;
+	response->length = 0;
+	uint8_t length = 0;
+	while (length < request->length) {
+		uint8_t valueLength;
+		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], &request->data[length+1], &valueLength, false);
+		length += 1 + valueLength;
+		if (C_OK != code) return code;
+	}
+	return C_OK;
 }
 
 const PROGMEM fRFFunction RFFunctions[_eFCount] = {
