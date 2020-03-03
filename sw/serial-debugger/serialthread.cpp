@@ -8,7 +8,7 @@
 
 SerialThread::SerialThread(QObject *parent) : QThread(parent)
 {
-
+    this->start();
 }
 
 SerialThread::~SerialThread() {
@@ -21,38 +21,43 @@ SerialThread::~SerialThread() {
 
 void SerialThread::transaction(const QString &portName, int waitTimeout, const QByteArray &request)
 {
-    const QMutexLocker locker(&m_mutex);
-    this->m_portName = portName;
-    this->m_waitTimeout = waitTimeout;
-    this->m_request = request;
-    if (!isRunning())
-        start();
-    else
-        this->m_cond.wakeOne();
+    this->msgQueue.enqueue(Message(request, portName, waitTimeout));
+//    const QMutexLocker locker(&m_mutex);
+//    this->m_portName = portName;
+//    this->m_waitTimeout = waitTimeout;
+//    this->m_request = request;
+//    if (!this->isRunning())
+//        start();
+//    else
+    this->m_cond.wakeOne();
 }
 
 void SerialThread::run()
 {
     bool currentPortNameChanged = false;
-
-    this->m_mutex.lock();
     QString currentPortName;
-    if (currentPortName != this->m_portName) {
-        currentPortName = this->m_portName;
-        currentPortNameChanged = true;
-    }
-
-    int currentWaitTimeout = this->m_waitTimeout;
-    QByteArray currentRequest = this->m_request;
-    this->m_mutex.unlock();
+    int currentWaitTimeout = 0;
     QSerialPort serial;
 
-    if (currentPortName.isEmpty()) {
-        emit this->error(tr("No port name specified"));
-        return;
-    }
-
     while (!this->m_quit) {
+        this->m_mutex.lock();
+        m_cond.wait(&this->m_mutex);
+        if (this->msgQueue.isEmpty()) continue;
+        Message *msg = &(this->msgQueue.head());
+        if (currentPortName != msg->portName) {
+            currentPortName = msg->portName;
+            currentPortNameChanged = true;
+
+            if (currentPortName.isEmpty()) {
+                emit this->error(tr("No port name specified"));
+                return;
+            }
+        } else {
+            currentPortNameChanged = false;
+        }
+        currentWaitTimeout = msg->waitTimeout;
+        this->m_mutex.unlock();
+
         if (currentPortNameChanged) {
             serial.close();
             serial.setPortName(currentPortName);
@@ -60,12 +65,12 @@ void SerialThread::run()
 
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit this->error(tr("Can't open %1, error code %2")
-                           .arg(this->m_portName).arg(serial.error()));
+                           .arg(currentPortName).arg(serial.error()));
                 return;
             }
         }
         // write request
-        serial.write(this->stuffBytes(currentRequest));
+        serial.write(this->stuffBytes(msg->request));
         if (serial.waitForBytesWritten(currentWaitTimeout)) {
             // read response
             if (serial.waitForReadyRead(currentWaitTimeout)) {
@@ -84,17 +89,7 @@ void SerialThread::run()
             emit this->timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-        this->m_mutex.lock();
-        m_cond.wait(&this->m_mutex);
-        if (currentPortName != this->m_portName) {
-            currentPortName = this->m_portName;
-            currentPortNameChanged = true;
-        } else {
-            currentPortNameChanged = false;
-        }
-        currentWaitTimeout = this->m_waitTimeout;
-        currentRequest = this->m_request;
-        this->m_mutex.unlock();
+        this->msgQueue.dequeue();
     }
 }
 
@@ -244,10 +239,17 @@ QByteArray SerialThread::stuffBytes(const QByteArray &from)
     tmp.append('\xC0');
     tmp.append('\x00');
     tmp.append(this->stuffByte(from[0]));
-    tmp.append(this->stuffByte(from.length() - 1));
+    tmp.append(this->stuffByte(static_cast<char>(std::min(from.length() - 1, 255))));
     for (uint8_t i = 1; i < from.length(); i++) {
         tmp.append(this->stuffByte(from[i]));
     }
     return tmp;
 }
 
+
+Message::Message(const QByteArray &request, const QString &portName, int waitTimeout)
+{
+    this->request = request;
+    this->portName = portName;
+    this->waitTimeout = waitTimeout;
+}
