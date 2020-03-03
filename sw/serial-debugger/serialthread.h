@@ -5,6 +5,15 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QQueue>
+
+class Message {
+public:
+    explicit Message(const QByteArray &request, const QString &portName, int waitTimeout);
+    QByteArray request;
+    QString portName;
+    int waitTimeout;
+};
 
 class SerialThread : public QThread
 {
@@ -29,6 +38,7 @@ signals:
 public slots:
 private:
     void run() override;
+    QQueue<Message> msgQueue;
 
     QString m_portName;
     QByteArray m_request;
