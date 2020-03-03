@@ -5,7 +5,7 @@
  *  Author: Mintytail
  */ 
 #include "units_structure.h"
-#include "functions.h"
+#include "protocol.h"
 
 
 const sChannel switchChannels[] PROGMEM = {

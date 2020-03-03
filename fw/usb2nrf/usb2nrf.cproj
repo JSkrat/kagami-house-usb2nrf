@@ -166,6 +166,12 @@
     <Compile Include="nrf24l01.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="protocol.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="protocol.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="RF parser.c">
       <SubType>compile</SubType>
     </Compile>

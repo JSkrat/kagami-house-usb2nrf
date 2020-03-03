@@ -3,13 +3,16 @@
  *
  * Created: 03.11.2019 19:18:07
  *  Author: Mintytail
+ *
+ * The main job of this module is to create interface request-response from both, master and slave points of view
+ * from the nrf24l01 library
  */ 
 
 
 #ifndef RF_PARSER_H_
 #define RF_PARSER_H_
 
-#include "defines.h"
+#include "../usb2nrf/defines.h"
 #include "../usb2nrf/nrf24l01.h"
 
 extern nRF24L01 *rfTransiever;
@@ -25,18 +28,18 @@ typedef enum {
 	rmIdle = 0,
 	rmSlave = 1,
 	rmMaster = 2,
-	rmBad,
+	rmGetMode, // should be the last, we check for validity by mode being numerically less than that value
 } eRFMode;
 
-extern eRFMode RFMode;
+//extern const eRFMode RFMode;
 //extern t_address MasterAddress;
 extern uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
 
 void rf_init();
 void checkTransieverRXBuf();
 void transmitPacket(tRfPacket *packet);
-void nListen(t_address *address);
-bool switchRFMode(eRFMode newMode);
+void RFListen(t_address *address);
+eRFMode switchRFMode(eRFMode newMode);
 void setListenAddress(t_address *address);
 
 
