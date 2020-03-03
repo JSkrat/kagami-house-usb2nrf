@@ -78,7 +78,5 @@ void uQueueChar(const uint8_t c);
 void uQueueString(const string *data);
 void uSendPacket(union uPackage *packet);
 
-void nListen();
-
 
 #endif /* UART_PARSER_H_ */

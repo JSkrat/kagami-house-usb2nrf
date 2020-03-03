@@ -9,13 +9,21 @@
 #ifndef UNITS_STRUCTURE_H_
 #define UNITS_STRUCTURE_H_
 #include <stdbool.h>
-#include "functions.h"
+#include <stdint.h>
+#include "protocol.h"
+
+#ifndef UNIT_TESTING
+	#include <avr/pgmspace.h>
+#else
+
+#endif
 
 bool switches[5];
 bool relays[2];
 uint16_t analog_output;
 
-extern const sUnit units[UNITS_LENGTH];
-
+#define UNITS_LENGTH 6
+extern const sUnit PROGMEM units[UNITS_LENGTH];
+//#define UNITS_LENGTH sizeof(units)/sizeof(sUnit)
 
 #endif /* UNITS_STRUCTURE_H_ */

@@ -5,18 +5,21 @@
  *  Author: Mintytail
  */ 
 
-#include "functions.h"
+#include "../usb2nrf/functions.h"
+#include "../usb2nrf/protocol.h"
+#include "units_structure.h"
 
 #ifndef UNIT_TESTING
-    #include "messages.h"
     #include <avr/pgmspace.h>
 #else
 
 #endif
 #include "../usb2nrf/RF parser.h"
 #include <stdbool.h>
+#include <stdint.h>
+// for memcpy
 #include <string.h>
-#include "units_structure.h"
+// if it is unit tests, it should be local file, not of main project one
 
 const uint8_t _dataTypeLength[] = {
 	[eCDTBit] = 1,
@@ -25,12 +28,12 @@ const uint8_t _dataTypeLength[] = {
 	[eCDTArray] = 1,
 };
 
-uint8_t setSessionKey(uint8_t unit, string *request, string *response) {
+uint8_t setSessionKey(uint8_t unit, sString *request, sString *response) {
 	// TODO after integrating cipher library
-	return C_NOT_IMPLEMENTED;
+	return ercNotImplemented;
 }
 
-uint8_t getListOfUnits(uint8_t unit, string *request, string *response) {
+uint8_t getListOfUnits(uint8_t unit, sString *request, sString *response) {
     (void) unit;
     (void) request;
 	response->length = 1 + 4*UNITS_LENGTH;
@@ -42,22 +45,22 @@ uint8_t getListOfUnits(uint8_t unit, string *request, string *response) {
         response->data[base+2] = pgm_read_byte(&(units[i].channelsWOLength));
         response->data[base+3] = pgm_read_byte(&(units[i].channelsRWLength));
 	}
-	return C_OK;
+	return ercOk;
 }
 
-uint8_t setMACAddress(uint8_t unit, string *request, string *response) {
+uint8_t setMACAddress(uint8_t unit, sString *request, sString *response) {
     (void) unit;
     (void) response;
 //    response->length = 0;
 	if (5 == request->length) {
 		setListenAddress((t_address*) request->data);	
-		return C_OK;
+		return ercOk;
 	} else {
-		return C_AD_BAD_LENGTH;
+		return ercAddresBadLength;
 	}
 }
 
-uint8_t getRFStatistics(uint8_t unit, string *request, string *response) {
+uint8_t getRFStatistics(uint8_t unit, sString *request, sString *response) {
     (void) unit;
     (void) request;
 	response->length = 10;
@@ -67,10 +70,10 @@ uint8_t getRFStatistics(uint8_t unit, string *request, string *response) {
 	STORE_16(4, error_responses);
 	STORE_16(6, transaction_errors);
 	STORE_16(8, ack_timeouts);
-	return C_OK;
+	return ercOk;
 }
 
-uint8_t getPropertiesOfUnit(uint8_t unit, string *request, string *response) {
+uint8_t getPropertiesOfUnit(uint8_t unit, sString *request, sString *response) {
     (void) request;
 	response->length = 13;
     response->data[0] = pgm_read_byte(&(units[unit].type));
@@ -100,15 +103,15 @@ uint8_t getPropertiesOfUnit(uint8_t unit, string *request, string *response) {
 		response->data[1 + i + 4*1] = wo;
 		response->data[1 + i + 4*2] = rw;
 	}
-	return C_OK;
+	return ercOk;
 }
 
-uint8_t getTextDescription(uint8_t unit, string *request, string *response) {
-	return C_NOT_IMPLEMENTED;
+uint8_t getTextDescription(uint8_t unit, sString *request, sString *response) {
+	return ercNotImplemented;
 }
 
-uint8_t setTextDescription(uint8_t unit, string *request, string *response) {
-	return C_NOT_IMPLEMENTED;
+uint8_t setTextDescription(uint8_t unit, sString *request, sString *response) {
+	return ercNotImplemented;
 }
 
 uint8_t _readWriteSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *data, uint8_t *responseLength, bool isRead) {
@@ -123,83 +126,83 @@ uint8_t _readWriteSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *data
 			length = pgm_read_byte(&(units[unit].channelsROLength));
 			channels = pgm_read_ptr(&(units[unit].channelsRO));
 		} else {
-			return C_CH_BAD_PERMISSIONS;
+			return ercChBadPermissions;
 		}
     } else if (0x20 > channelNumPerm) {
 		if (! isRead) {
 			length = pgm_read_byte(&(units[unit].channelsWOLength));
 			channels = pgm_read_ptr(&(units[unit].channelsWO));
 		} else {
-			return C_CH_BAD_PERMISSIONS;
+			return ercChBadPermissions;
 		}
     } else if (0x30 > channelNumPerm) {
 		length = pgm_read_byte(&(units[unit].channelsRWLength));
 		channels = pgm_read_ptr(&(units[unit].channelsRW));
 	} else {
-		return C_CH_BAD_CHANNELS;
+		return ercChBadChannels;
 	}
 	
     if (length <= channelNum) {
-		return C_CH_BAD_CHANNELS;
+		return ercChBadChannels;
 	}
     const eChannelDataType channelDT = pgm_read_byte(&(channels[channelNum].dataType));
     void *value = pgm_read_ptr(&(channels[channelNum].value));
 	
 	if (channelDTReq != channelDT) {
-		return C_CH_VALIDATION_FAILED;
+		return ercChValidationFailed;
 	}
 	
 	// validation done
 	if (isRead) {
 		data[0] = channelDT << 6 | channelNumPerm;
 		if (eCDTArray == channelDT) {
-			uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) value)->length;
-			memcpy(&(data[1]), value, arrayRawLength);
-			*responseLength = 1 + arrayRawLength;
+			//uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) value)->length;
+			//memcpy(&(data[1]), value, arrayRawLength);
+			//*responseLength = 1 + arrayRawLength;
 		} else {
 			memcpy(&(data[1]), value, _dataTypeLength[channelDT]);
 			*responseLength = 1 + _dataTypeLength[channelDT];
 		}
 	} else {
 		if (eCDTArray == channelDT) {
-			uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) data)->length;
-			memcpy(value, &(data[0]), arrayRawLength);
-			*responseLength = arrayRawLength;
+			//uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) data)->length;
+			//memcpy(value, &(data[0]), arrayRawLength);
+			//*responseLength = arrayRawLength;
 		} else {
 			memcpy(value, &(data[0]), _dataTypeLength[channelDT]);
 			*responseLength = _dataTypeLength[channelDT];
 		}
 	}
-	return C_OK;	
+	return ercOk;	
 }
 
-uint8_t readUnitChannel(uint8_t unit, string *request, string *response) {
+uint8_t readUnitChannel(uint8_t unit, sString *request, sString *response) {
     uint8_t length = 0;
     for (int i = 0; i < request->length; i++) {
 		uint8_t valueLength = 0;
-        uint8_t code = _readWriteSingleUnitChannel(unit, request->data[i], (&response->data[length]), &valueLength, true);
+        uint8_t code = _readWriteSingleUnitChannel(unit, request->data[i], response->data + length, &valueLength, true);
 		length += valueLength;
 		
-		if (C_OK != code) {
+		if (ercOk != code) {
 			// cancel and return error code instead
 			response->length = 0;
 			return code;
 		}
 	}
 	response->length = length;
-	return C_OK;
+	return ercOk;
 }
 
-uint8_t writeUnitChannel(uint8_t unit, string *request, string *response) {
+uint8_t writeUnitChannel(uint8_t unit, sString *request, sString *response) {
 	response->length = 0;
 	uint8_t length = 0;
 	while (length < request->length) {
 		uint8_t valueLength;
-		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], &request->data[length+1], &valueLength, false);
+		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], request->data + length + 1, &valueLength, false);
 		length += 1 + valueLength;
-		if (C_OK != code) return code;
+		if (ercOk != code) return code;
 	}
-	return C_OK;
+	return ercOk;
 }
 
 const PROGMEM fRFFunction RFFunctions[_eFCount] = {

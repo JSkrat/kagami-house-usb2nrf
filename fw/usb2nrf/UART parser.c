@@ -28,7 +28,6 @@ uint8_t sendBuffer[SEND_BUFFER_SIZE];
 /// sendBufferEnd points to next empty space in buffer
 uint8_t sendBufferBegin = 0, sendBufferEnd = 0;
 
-const uint8_t modemAddress[5] = { 0xA5, 0x42, 0x42, 0x42, 0x02 };
 uint8_t replyAddress[MAC_SIZE];
 uint16_t badRFPackets = 0;
 uint16_t rfTimeouts = 0;
@@ -157,21 +156,21 @@ void processPacket() {
 			break;
 		}
 		case mcListen: {
-			nListen((t_address *) reqBuffer.pkg.payload);
+			RFListen((t_address *) reqBuffer.pkg.payload);
 			respBuffer.pkg.payloadSize = 1;
 			respBuffer.pkg.payload[0] = 0;
 			break;
 		}
 		case mcSetMode: {
 			respBuffer.pkg.payloadSize = 2;
-			uint8_t newMode = reqBuffer.pkg.payload[0];
-			if (switchRFMode(newMode)) {
+			eRFMode setMode = reqBuffer.pkg.payload[0];
+			eRFMode newMode = switchRFMode(setMode);
+			if (setMode == newMode) {
 				respBuffer.pkg.payload[0] = 0;
-				respBuffer.pkg.payload[1] = newMode;
 			} else {
 				respBuffer.pkg.payload[0] = 1;
-				respBuffer.pkg.payload[1] = RFMode;
 			}
+			respBuffer.pkg.payload[1] = newMode;
 			break;
 		}
 		case mcSetListenAddress: {
