@@ -15,7 +15,7 @@
 #ifndef UNIT_TESTING
 	#include <avr/pgmspace.h>
 #else
-
+    #include "../usb2nrf_tests/pgmspace.h"
 #endif
 
 bool switches[5];

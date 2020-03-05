@@ -1,5 +1,5 @@
-#ifndef TESTS_H
-#define TESTS_H
+#ifndef PGMSPACE_H
+#define PGMSPACE_H
 
 #include <stdint.h>
 
@@ -9,6 +9,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    void initialize();
+    void reinitialize_memory();
+
     void *pgm_read_ptr_near(void *ptr);
     void *pgm_read_ptr(void *ptr);
 
@@ -17,4 +20,4 @@ extern "C" {
 }
 #endif
 
-#endif // TESTS_H
+#endif // PGMSPACE_H

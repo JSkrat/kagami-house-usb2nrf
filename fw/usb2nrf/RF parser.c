@@ -13,6 +13,7 @@
 #endif
 #include <string.h>
 #include "../usb2nrf/protocol.h"
+#include "RF statistics.h"
 
 void checkTransieverRXBuf(/*const bool listenAfterwards*/);
 void parseRFPacket(tRfPacket *pkg);
@@ -20,8 +21,6 @@ void parseRFPacket(tRfPacket *pkg);
 nRF24L01 *rfTransiever;
 eRFMode RFMode;
 t_address ListenAddress;
-
-uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
 
 enum eRFError {
 	ereNone = 0,

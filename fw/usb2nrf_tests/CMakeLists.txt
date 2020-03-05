@@ -10,10 +10,44 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_definitions(-D"UNIT_TESTING=1")
 
-add_executable(usb2nrf_tests RFParser.c tests.c functions.c units_structure.cpp main.cpp )
-include_directories(../../../googletest/googletest/include)
+set(
+    HEADERS
+    ../usb2nrf/defines.h
+    ../usb2nrf/protocol.h
+    ../usb2nrf/functions.h
+    "RF Parser.h"
+    "../usb2nrf/RF statistics.h"
+    #../usb2nrf/messages.h
+)
 
-find_library(TEST_LIBRARY gtestd ../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib)
-find_library(TEST_MAIN_LIBRARY gtest_maind ../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib)
+add_executable(
+    usb2nrf_tests
+    ${HEADERS}
+    "RF Parser.c"
+    pgmspace.c
+    ../usb2nrf/functions.c
+    ../usb2nrf/protocol.c
+    "../usb2nrf/RF statistics.c"
+    units_structure.cpp
+    test_protocol.cpp
+    test_functions.cpp
+    main.cpp
+)
+include_directories(../../../googletest/googletest/include)
+include_directories(../usb2nrf/)
+
+
+find_library(
+    TEST_LIBRARY
+    gtestd
+    ../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib
+)
+
+#find_library(
+#    TEST_MAIN_LIBRARY
+#    gtest_maind
+#    ../../../googletest/build-googletest-Desktop_Qt_5_12_5_MinGW_64_bit-u041eu0442u043bu0430u0434u043au0430/lib
+#)
+
 target_link_libraries(usb2nrf_tests LINK_PUBLIC ${TEST_LIBRARY})
-target_link_libraries(usb2nrf_tests LINK_PUBLIC ${TEST_MAIN_LIBRARY})
+#target_link_libraries(usb2nrf_tests LINK_PUBLIC ${TEST_MAIN_LIBRARY})
