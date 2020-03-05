@@ -13,22 +13,6 @@
 
 uint8_t lastReceivedTransacrionId;
 
-enum eRequestOffsets {
-	eqoVersion = 0,
-	eqoTransactionId = 1,
-	eqoUnitId = 2,
-	eqoNextChannel = 3,
-	eqoFunctionId = 4,
-	eqoData = 5,
-};
-
-enum eResponseOffsets {
-	eroVersion = 0,
-	eroTransactionId = 1,
-	eroCode = 2,
-	eroData = 3,
-};
-
 
 enum eResponseCodes lastSentPacketStatus;
 

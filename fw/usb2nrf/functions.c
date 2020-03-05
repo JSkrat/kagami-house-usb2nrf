@@ -7,14 +7,16 @@
 
 #include "../usb2nrf/functions.h"
 #include "../usb2nrf/protocol.h"
-#include "units_structure.h"
-
 #ifndef UNIT_TESTING
+    #include "./units_structure.h"
+    #include "./RF parser.h"
     #include <avr/pgmspace.h>
 #else
-
+    #include "../usb2nrf_tests/units_structure.h"
+    #include "../usb2nrf_tests/RF parser.h"
+    #include "../usb2nrf_tests/pgmspace.h"
 #endif
-#include "../usb2nrf/RF parser.h"
+#include "../usb2nrf/RF statistics.h"
 #include <stdbool.h>
 #include <stdint.h>
 // for memcpy
@@ -36,10 +38,10 @@ uint8_t setSessionKey(uint8_t unit, sString *request, sString *response) {
 uint8_t getListOfUnits(uint8_t unit, sString *request, sString *response) {
     (void) unit;
     (void) request;
-	response->length = 1 + 4*UNITS_LENGTH;
-	response->data[0] = UNITS_LENGTH;
+	response->length = 0 + 4*UNITS_LENGTH;
+	//response->data[0] = UNITS_LENGTH;
 	for (int i = 0; i < UNITS_LENGTH; i++) {
-		uint8_t base = 1 + 4*i;
+		uint8_t base = 0 + 4*i;
         response->data[base+0] = pgm_read_byte(&(units[i].type));
         response->data[base+1] = pgm_read_byte(&(units[i].channelsROLength));
         response->data[base+2] = pgm_read_byte(&(units[i].channelsWOLength));

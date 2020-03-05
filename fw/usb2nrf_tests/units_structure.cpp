@@ -5,8 +5,9 @@
  *  Author: Mintytail
  */
 #include "units_structure.h"
-#include "functions.h"
+#include "../usb2nrf/functions.h"
 #include <unordered_map>
+#include "pgmspace.h"
 
 bool switches[5] = {
     true,

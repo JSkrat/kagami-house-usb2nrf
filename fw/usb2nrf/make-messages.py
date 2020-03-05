@@ -66,8 +66,6 @@ h_output.write('''
 
 #ifndef UNIT_TESTING
     #include <avr/pgmspace.h>
-#else
-    #include "../usb2nrf_tests/tests.h"
 #endif
 #include <stdint.h>
 
