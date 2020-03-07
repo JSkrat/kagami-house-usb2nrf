@@ -6,11 +6,12 @@
  */ 
 
 
-#ifndef PROTOCOL INTERNAL_H_
-#define PROTOCOL INTERNAL_H_
+#ifndef PROTOCOL_INTERNAL_H_
+#define PROTOCOL_INTERNAL_H_
 
+#include <stdint.h>
 
 uint8_t lastTransacrionId;
 
 
-#endif /* PROTOCOL INTERNAL_H_ */
+#endif /* PROTOCOL_INTERNAL_H_ */
