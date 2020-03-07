@@ -10,6 +10,7 @@ extern uint8_t *__stop_progmem;
 // also have no idea why we need to get a pointer to that, not directly that
 #define PROGMEM_SIZE (&__stop_progmem - &__start_progmem)*sizeof(__start_progmem)
 // without this magical variable memcpy back to segment causes sigsegv for some reason
+// no matter where in this file it is 6_9
 static uint8_t qwerty PROGMEM = 0;
 
 // an original data before any tests
@@ -18,8 +19,6 @@ static uint8_t *memory_copy;
 
 void initialize() {
     (void) qwerty;
-//    int64_t size = PROGMEM_SIZE;
-//    int64_t better_size = (int64_t) &__stop_progmem - (int64_t) &__start_progmem;
     memory_copy = malloc(PROGMEM_SIZE);
     memcpy(memory_copy, &__start_progmem, PROGMEM_SIZE);
 }
@@ -40,17 +39,17 @@ void reinitialize_memory() {
 /******************************************************
  * pgm* functions emulation
  ******************************************************/
-void *pgm_read_ptr_near(void *ptr) {
+void *pgm_read_ptr_near(void const *ptr) {
 //    return *((void **)ptr);
     return pgm_read_ptr(ptr);
 }
 
-void *pgm_read_ptr(void *ptr) {
+void *pgm_read_ptr(void const *ptr) {
     /// todo might fail on 128-bit machines
     return (void *)(~(*(uint64_t*)(ptr)));
 }
 
-uint8_t pgm_read_byte(uint8_t *ptr) {
+uint8_t pgm_read_byte(const uint8_t *ptr) {
     return ~(*ptr);
 }
 
@@ -79,6 +78,6 @@ void nRF24L01_listen(nRF24L01 *rf, int pipe, uint8_t *address) {
 
 }
 
-void uSendPacket(union uPackage *packet) {
+//void uSendPacket(union uPackage *packet) {
 
-}
+//}

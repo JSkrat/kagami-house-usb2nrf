@@ -17,6 +17,7 @@
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include "../usb2nrf/RF statistics.h"
+#include "../usb2nrf/protocol internal.h"
 #include <stdbool.h>
 #include <stdint.h>
 // for memcpy
@@ -30,12 +31,12 @@ const uint8_t _dataTypeLength[] = {
 	[eCDTArray] = 1,
 };
 
-uint8_t setSessionKey(uint8_t unit, sString *request, sString *response) {
+uint8_t setSessionKey(const uint8_t unit, const scString *request, sString *response) {
 	// TODO after integrating cipher library
 	return ercNotImplemented;
 }
 
-uint8_t getListOfUnits(uint8_t unit, sString *request, sString *response) {
+uint8_t getListOfUnits(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) request;
 	response->length = 0 + 4*UNITS_LENGTH;
@@ -50,7 +51,7 @@ uint8_t getListOfUnits(uint8_t unit, sString *request, sString *response) {
 	return ercOk;
 }
 
-uint8_t setMACAddress(uint8_t unit, sString *request, sString *response) {
+uint8_t setMACAddress(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) response;
 //    response->length = 0;
@@ -62,7 +63,16 @@ uint8_t setMACAddress(uint8_t unit, sString *request, sString *response) {
 	}
 }
 
-uint8_t getRFStatistics(uint8_t unit, sString *request, sString *response) {
+uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString *response) {
+	(void) unit;
+	(void) request;
+	lastTransacrionId = 128;
+	response->data[0] = lastTransacrionId;
+	response->length = 1;
+	return ercOk;
+}
+
+uint8_t getStatistics(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) request;
 	response->length = 10;
@@ -75,7 +85,7 @@ uint8_t getRFStatistics(uint8_t unit, sString *request, sString *response) {
 	return ercOk;
 }
 
-uint8_t getPropertiesOfUnit(uint8_t unit, sString *request, sString *response) {
+uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString *response) {
     (void) request;
 	response->length = 13;
     response->data[0] = pgm_read_byte(&(units[unit].type));
@@ -108,15 +118,15 @@ uint8_t getPropertiesOfUnit(uint8_t unit, sString *request, sString *response) {
 	return ercOk;
 }
 
-uint8_t getTextDescription(uint8_t unit, sString *request, sString *response) {
+uint8_t getTextDescription(const uint8_t unit, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 
-uint8_t setTextDescription(uint8_t unit, sString *request, sString *response) {
+uint8_t setTextDescription(const uint8_t unit, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 
-uint8_t _readWriteSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *data, uint8_t *responseLength, bool isRead) {
+uint8_t _readWriteSingleUnitChannel(const uint8_t unit, const uint8_t request, uint8_t *data, uint8_t *responseLength, const bool isRead) {
 	uint8_t length = 0;
 	sChannel *channels = NULL;
 	const eChannelDataType channelDTReq = request >> 6;
@@ -178,7 +188,7 @@ uint8_t _readWriteSingleUnitChannel(uint8_t unit, uint8_t request, uint8_t *data
 	return ercOk;	
 }
 
-uint8_t readUnitChannel(uint8_t unit, sString *request, sString *response) {
+uint8_t readUnitChannel(const uint8_t unit, const scString *request, sString *response) {
     uint8_t length = 0;
     for (int i = 0; i < request->length; i++) {
 		uint8_t valueLength = 0;
@@ -195,12 +205,12 @@ uint8_t readUnitChannel(uint8_t unit, sString *request, sString *response) {
 	return ercOk;
 }
 
-uint8_t writeUnitChannel(uint8_t unit, sString *request, sString *response) {
+uint8_t writeUnitChannel(const uint8_t unit, const scString *request, sString *response) {
 	response->length = 0;
 	uint8_t length = 0;
 	while (length < request->length) {
 		uint8_t valueLength;
-		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], request->data + length + 1, &valueLength, false);
+		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], (uint8_t*) request->data + length + 1, &valueLength, false);
 		length += 1 + valueLength;
 		if (ercOk != code) return code;
 	}
@@ -211,7 +221,8 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
 	[eFSetSessionKey] = &setSessionKey,
 	[eFGetListOfUnits] = &getListOfUnits,
 	[eFSetAddress] = &setMACAddress,
-	[eFGetRFStatistics] = &getRFStatistics,
+	[eFGetStatistics] = &getStatistics,
+    [eFResetTransactionId] = &resetTransactionId,
 	
 	[eFGetPropertiesOfUnit] = &getPropertiesOfUnit,
 	[eFGetTextDescription] = &getTextDescription,

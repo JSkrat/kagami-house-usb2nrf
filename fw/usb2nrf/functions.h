@@ -16,7 +16,8 @@ typedef enum {
 	eFSetSessionKey = 0,
 	eFGetListOfUnits = 1,
 	eFSetAddress = 2,
-	eFGetRFStatistics = 3,
+	eFGetStatistics = 3,
+    eFResetTransactionId = 4,
 	
 	eFGetPropertiesOfUnit = 0x10,
 	eFGetTextDescription = 0x11,

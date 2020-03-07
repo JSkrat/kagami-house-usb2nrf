@@ -11,6 +11,9 @@
 
 #ifndef RF_PARSER_H_
 #define RF_PARSER_H_
+#ifdef UNIT_TESTING
+	#pragma pack(1, push)
+#endif
 
 #include "../usb2nrf/defines.h"
 #include "../usb2nrf/nrf24l01.h"
@@ -41,6 +44,7 @@ void RFListen(t_address *address);
 eRFMode switchRFMode(eRFMode newMode);
 void setListenAddress(t_address *address);
 
-
-
+#ifdef UNIT_TESTING
+	#pragma pack(pop)
+#endif
 #endif /* RF_PARSER_H_ */
