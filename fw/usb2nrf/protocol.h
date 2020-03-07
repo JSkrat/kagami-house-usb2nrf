@@ -103,6 +103,8 @@ typedef enum {
 	eUTARelay  = 0x41,
 	eUTAAnalog = 0x42,
 	eUTARGB    = 0x43,
+
+    eUTSystem  = 0x80,
 	eUTALast
 } eUnitType;
 

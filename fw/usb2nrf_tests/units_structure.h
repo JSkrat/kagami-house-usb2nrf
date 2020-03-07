@@ -21,7 +21,7 @@ extern bool switches[5];
 extern bool relays[2];
 extern uint16_t analog_output;
 
-#define UNITS_LENGTH 6
+#define UNITS_LENGTH 7
 extern const sUnit units[UNITS_LENGTH];
 
 #ifdef __cplusplus

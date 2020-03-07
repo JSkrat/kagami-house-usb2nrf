@@ -72,6 +72,13 @@ uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString 
 	return ercOk;
 }
 
+uint8_t NOP(const uint8_t unit, const scString *request, sString *response) {
+	(void) unit;
+	(void) request;
+	(void) response;
+	return ercOk;
+}
+
 uint8_t getStatistics(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) request;
@@ -223,6 +230,7 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
 	[eFSetAddress] = &setMACAddress,
 	[eFGetStatistics] = &getStatistics,
     [eFResetTransactionId] = &resetTransactionId,
+	[eFNOP] = &NOP,
 	
 	[eFGetPropertiesOfUnit] = &getPropertiesOfUnit,
 	[eFGetTextDescription] = &getTextDescription,

@@ -62,6 +62,10 @@ const sChannel outputChannels[] PROGMEM = {
 
 const sUnit units[UNITS_LENGTH] PROGMEM = {
     {
+        type: eUTSystem,
+        channelsROLength: 0,
+    },
+    {
         type: eUTSSwitch,
         channelsROLength: 1,
         channelsRO: &switchChannels[0]
@@ -106,17 +110,18 @@ const sUnit units[UNITS_LENGTH] PROGMEM = {
 };
 
 const std::unordered_map<int, sChannel> testChannels = {
-    {0*CHANNELS_PER_UNIT, {eCDTBit, {&switches[0]}}},
-    {1*CHANNELS_PER_UNIT, {eCDTBit, {&switches[1]}}},
-    {2*CHANNELS_PER_UNIT+0, {eCDTBit, {&switches[2]}}},
-    {2*CHANNELS_PER_UNIT+1, {eCDTBit, {&switches[3]}}},
-    {2*CHANNELS_PER_UNIT+2, {eCDTBit, {&switches[4]}}},
-    {3*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {eCDTBit, {&relays[0]}}},
-    {4*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*1+0, {
+//    {0*CHANNELS_PER_UNIT, {eCDTBit, {&switches[0]}}},
+    {1*CHANNELS_PER_UNIT, {eCDTBit, {&switches[0]}}},
+    {2*CHANNELS_PER_UNIT, {eCDTBit, {&switches[1]}}},
+    {3*CHANNELS_PER_UNIT+0, {eCDTBit, {&switches[2]}}},
+    {3*CHANNELS_PER_UNIT+1, {eCDTBit, {&switches[3]}}},
+    {3*CHANNELS_PER_UNIT+2, {eCDTBit, {&switches[4]}}},
+    {4*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {eCDTBit, {&relays[0]}}},
+    {5*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*1+0, {
          dataType: eCDTBit,
          value: {tBit: &relays[1]}
      }},
-    {5*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {
+    {6*CHANNELS_PER_UNIT+CHANNELS_PER_PERMISSION*2+0, {
          dataType: eCDTUnsigned,
          value: {reinterpret_cast<bool*>(&analog_output)}
      }},//*/

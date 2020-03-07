@@ -22,11 +22,11 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 	if (offsetof(sRequest, rqData) > length) return ercBadRequestData;
 	// check the contents
 	if (0 != data->rqVersion) return ercBadVersion;
-	if (lastTransacrionId+1 != data->rqTransactionId) {
+	/*if (lastTransacrionId+1 != data->rqTransactionId) {
 		// do not check transaction id if it is reset transaction id
 		if (eFResetTransactionId != data->rqFunctionId)
 			return ercNotConsecutiveTransactionId;
-	}
+	}*/
 	// only basic check if unit 0 functions called for not unit 0 and vice versa
 	if ((0 == data->rqUnitId) != (0x10 > data->rqFunctionId)) {
 		return ercBadFunctionId;
@@ -50,7 +50,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	RESPONSE_DATA->rsCode = validation;
 	switch (validation) {
 		case ercOk: {
-			fRFFunction method = pgm_read_ptr(RFFunctions[REQUEST_DATA->rqFunctionId]);
+            fRFFunction method = pgm_read_ptr(&(RFFunctions[REQUEST_DATA->rqFunctionId]));
 			if (NULL == method) {
 				RESPONSE_DATA->rsCode = ercBadFunctionId;
 				break;
@@ -71,9 +71,9 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 			*responseLength = responseArg.length;
 			break;
 		}
-		case ercNotConsecutiveTransactionId: {
+		/*case ercNotConsecutiveTransactionId: {
 			RESPONSE_DATA->rsData[0] = lastTransacrionId;
-		}
+		}*/
 		default: break;
 	}
 }

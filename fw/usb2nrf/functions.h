@@ -18,6 +18,7 @@ typedef enum {
 	eFSetAddress = 2,
 	eFGetStatistics = 3,
     eFResetTransactionId = 4,
+	eFNOP = 5,
 	
 	eFGetPropertiesOfUnit = 0x10,
 	eFGetTextDescription = 0x11,
