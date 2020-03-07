@@ -12,10 +12,10 @@ extern "C" {
     void initialize();
     void reinitialize_memory();
 
-    void *pgm_read_ptr_near(void *ptr);
-    void *pgm_read_ptr(void *ptr);
+    void *pgm_read_ptr_near(const void *ptr);
+    void *pgm_read_ptr(const void *ptr);
 
-    uint8_t pgm_read_byte(uint8_t *ptr);
+    uint8_t pgm_read_byte(const uint8_t *ptr);
 #ifdef __cplusplus
 }
 #endif

@@ -13,6 +13,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#ifdef UNIT_TESTING
+	#pragma pack(push, 1)
+#endif
 
 #define PROTOCOL_VERSION 0
 
@@ -21,28 +24,34 @@ typedef struct {
 	uint8_t length;
 	uint8_t *data;
 } sString;
+
+typedef struct {
+	const uint8_t length;
+	const uint8_t *data;	
+} scString;
+
 // arguments are request and response
 // caller should allocate space for the response
 // unit (first argument) is guaranteed (by RF Parser) to be correct
-typedef uint8_t (*fRFFunction)(uint8_t, sString*, sString*);
+typedef uint8_t (*fRFFunction)(const uint8_t, const scString*, sString*);
 
-/// not to use outside the module! only for unit testing
-enum eRequestOffsets {
-	eqoVersion = 0,
-	eqoTransactionId = 1,
-	eqoUnitId = 2,
-	eqoNextChannel = 3,
-	eqoFunctionId = 4,
-	eqoData = 5,
-};
-/// not to use outside the module! only for unit testing
-enum eResponseOffsets {
-	eroVersion = 0,
-	eroTransactionId = 1,
-	eroCode = 2,
-	eroData = 3,
-};
+typedef struct {
+	uint8_t rqVersion;
+	uint8_t rqTransactionId;
+	uint8_t rqUnitId;
+	uint8_t rqNextChannel;
+	uint8_t rqFunctionId;
+	uint8_t rqData[];
+} sRequest;
 
+#define REQUEST_HEADER_SIZE ((uint8_t) offsetof(sRequest, rqData))
+	
+typedef struct {
+	uint8_t rsVersion;
+	uint8_t rsTransactionId;
+	uint8_t rsCode;
+	uint8_t rsData[];
+} sResponse;
 
 enum eResponseCodes {
 	ercOk = 0,
@@ -108,7 +117,10 @@ typedef struct {
 	const sChannel *channelsRW;
 } sUnit;
 
-void generateResponse(uint8_t requestLength, uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData);
+void generateResponse(const uint8_t requestLength, const uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData);
 void protocolInit();
 
+#ifdef UNIT_TESTING
+	#pragma pack(pop)
+#endif
 #endif /* PROTOCOL_H_ */

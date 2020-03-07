@@ -8,9 +8,6 @@ extern "C" {
 }
 #include "units_structure.h"
 
-extern uint8_t *__start_progmem;
-extern uint8_t *__stop_progmem;
-
 namespace my {
 namespace project {
 namespace {
@@ -81,7 +78,7 @@ TEST_F(FunctionsTest, TestSetMacAddress) {
     auto testMac = [&request, &response, this](uint8_t mac_length, int result) {
         request.length = mac_length;
         response.length = 0;
-        EXPECT_EQ(result, (*(this->getFunction(eFSetAddress)))(0, &request, &response));
+        EXPECT_EQ(result, (*(this->getFunction(eFSetAddress)))(0, reinterpret_cast<scString*>(&request), &response));
         EXPECT_EQ(0, response.length);
     };
     testMac(MAC_SIZE, ercOk);
@@ -90,6 +87,19 @@ TEST_F(FunctionsTest, TestSetMacAddress) {
     testMac(MAC_SIZE + 1, ercAddresBadLength);
     free(request.data);
     free(response.data);
+}
+
+TEST_F(FunctionsTest, TestResetTransactionId) {
+    sString request = {
+        .length = 0,
+        .data = nullptr
+    };
+    sString response = {
+        .length = 0,
+        .data = reinterpret_cast<uint8_t*>(malloc(256))
+    };
+    ASSERT_EQ(ercOk, (*(this->getFunction(eFResetTransactionoId)))(0, reinterpret_cast<scString*>(&request), &response));
+    ASSERT_EQ(1, response.length);
 }
 
 TEST_F(FunctionsTest, TestGetRFStatistics) {
@@ -102,7 +112,8 @@ TEST_F(FunctionsTest, TestGetRFStatistics) {
     error_responses = 0xCDBA;
     transaction_errors = 0xBCA9;
     ack_timeouts = 0xAB98;
-    ASSERT_EQ(ercOk, (*(this->getFunction(eFGetRFStatistics)))(0, nullptr, &response));
+    ASSERT_EQ(ercOk, (*(this->getFunction(eFGetStatistics)))(0, nullptr, &response));
+#pragma pack()
     typedef struct {
         uint16_t requests;
         uint16_t responses;
@@ -111,7 +122,7 @@ TEST_F(FunctionsTest, TestGetRFStatistics) {
         uint16_t ack_to;
     } tRFStatResponse;
     ASSERT_EQ(sizeof(tRFStatResponse), response.length);
-    tRFStatResponse *parsedResponse = reinterpret_cast<tRFStatResponse *>(&(response.data));
+//    tRFStatResponse *parsedResponse = reinterpret_cast<tRFStatResponse *>(&(response.data));
     EXPECT_EQ(total_requests, *reinterpret_cast<uint16_t*>(response.data));
     EXPECT_EQ(ok_responses, *reinterpret_cast<uint16_t*>(response.data+2));
     EXPECT_EQ(error_responses, *reinterpret_cast<uint16_t*>(response.data+4));
@@ -190,7 +201,7 @@ TEST_F(FunctionsTest, TestReadSingleChannel) {
                 };
                 request.length = 1;
                 request.data[0] = ((chType << 6) & 0xFF) | channel;
-                uint8_t code = (*(this->getFunction(eFReadUnitChannels)))(unit & 0xFF, &request, &c_response);
+                uint8_t code = (*(this->getFunction(eFReadUnitChannels)))(unit & 0xFF, reinterpret_cast<scString*>(&request), &c_response);
 
                 int testIndex = unit * CHANNELS_PER_UNIT + channel;
                 if (channel < CHANNELS_PER_UNIT && testChannels.count(testIndex)) {

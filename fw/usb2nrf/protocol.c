@@ -10,56 +10,61 @@
 #include "units_structure.h"
 #include <stdint.h>
 #include <string.h> // for NULL
-
-uint8_t lastReceivedTransacrionId;
+#include <stddef.h> // for offsetof
+#include "../usb2nrf/protocol internal.h"
 
 
 enum eResponseCodes lastSentPacketStatus;
 
 
-enum eResponseCodes validatePacket(uint8_t length, uint8_t *data) {
+enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 	// first lets check the packet minimum length
-	if (eqoData > length) return ercBadRequestData;
+	if (offsetof(sRequest, rqData) > length) return ercBadRequestData;
 	// check the contents
-	if (0 != data[eqoVersion]) return ercBadVersion;
-	if (lastReceivedTransacrionId+1 != data[eqoTransactionId]) {
-		return ercNotConsecutiveTransactionId;
+	if (0 != data->rqVersion) return ercBadVersion;
+	if (lastTransacrionId+1 != data->rqTransactionId) {
+		// do not check transaction id if it is reset transaction id
+		if (eFResetTransactionId != data->rqFunctionId)
+			return ercNotConsecutiveTransactionId;
 	}
 	// only basic check if unit 0 functions called for not unit 0 and vice versa
-	if ((0 == data[eqoUnitId]) != (0x10 > data[eqoFunctionId])) {
+	if ((0 == data->rqUnitId) != (0x10 > data->rqFunctionId)) {
 		return ercBadFunctionId;
 	}
-	if (_eFCount <= data[eqoFunctionId]) return ercBadFunctionId;
+	if (_eFCount <= data->rqFunctionId) return ercBadFunctionId;
 	// check if unit exists
-	if (UNITS_LENGTH <= data[eqoUnitId]) {
+	if (UNITS_LENGTH <= data->rqUnitId) {
 		return ercBadUnitId;
 	}
 	return ercOk;
 }
 
-void generateResponse(uint8_t requestLength, uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData) {
+void generateResponse(const uint8_t requestLength, const uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData) {
 	// response should be already allocated for that function
-	enum eResponseCodes validation = validatePacket(requestLength, requestData);
-	responseData[eroVersion] = PROTOCOL_VERSION;
-	responseData[eroTransactionId] = requestData[eqoTransactionId];
-	responseData[eroCode] = validation;
+	#define REQUEST_DATA ((const sRequest*) requestData)
+	#define RESPONSE_DATA ((sResponse*) responseData)
+	//using requestData = sRequest*;
+	enum eResponseCodes validation = validatePacket(requestLength, REQUEST_DATA);
+	RESPONSE_DATA->rsVersion = PROTOCOL_VERSION;
+	RESPONSE_DATA->rsTransactionId = REQUEST_DATA->rqTransactionId;
+	RESPONSE_DATA->rsCode = validation;
 	switch (validation) {
 		case ercOk: {
-			fRFFunction method = pgm_read_ptr(RFFunctions[requestData[eqoFunctionId]]);
+			fRFFunction method = pgm_read_ptr(RFFunctions[REQUEST_DATA->rqFunctionId]);
 			if (NULL == method) {
-				responseData[eroCode] = ercBadFunctionId;
+				RESPONSE_DATA->rsCode = ercBadFunctionId;
 				break;
 			}
-			sString requestArg = {
-				.length = requestLength - eqoData,
-				.data = &requestData[eqoData]
+			const scString requestArg = {
+				.length = requestLength - offsetof(sRequest, rqData),
+				.data = &(REQUEST_DATA->rqData[0])
 			};
 			sString responseArg = {
 				.length = 0,
-				.data = &responseData[eroData]
+				.data = &(RESPONSE_DATA->rsData[0])
 			};
-			responseData[eroCode] = (*method)(
-				requestData[eqoUnitId],
+			RESPONSE_DATA->rsCode = (*method)(
+				REQUEST_DATA->rqUnitId,
 				&requestArg,
 				&responseArg
 			);
@@ -67,12 +72,12 @@ void generateResponse(uint8_t requestLength, uint8_t *requestData, uint8_t *resp
 			break;
 		}
 		case ercNotConsecutiveTransactionId: {
-			responseData[eroData] = lastReceivedTransacrionId;
+			RESPONSE_DATA->rsData[0] = lastTransacrionId;
 		}
 		default: break;
 	}
 }
 
 void protocolInit() {
-	lastReceivedTransacrionId = 0;
+	lastTransacrionId = 0;
 }

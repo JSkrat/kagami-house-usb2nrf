@@ -6,8 +6,8 @@
  */ 
 
 
-#ifndef RF STATISTICS_H_
-#define RF STATISTICS_H_
+#ifndef RF_STATISTICS_H_
+#define RF_STATISTICS_H_
 
 #include <stdint.h>
 
@@ -15,4 +15,4 @@ extern uint16_t total_requests, ok_responses, error_responses, transaction_error
 
 
 
-#endif /* RF STATISTICS_H_ */
+#endif /* RF_STATISTICS_H_ */
