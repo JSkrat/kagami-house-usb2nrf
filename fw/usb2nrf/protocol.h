@@ -58,10 +58,7 @@ enum eResponseCodes {
 	
 	ercAddresBadLength = 1,
 	
-	ercBadUnit = 8,
-	
 	ercChBadChannels = 0x10,
-	ercChResponseTooBig = 0x11,
 	ercChBadPermissions = 0x12,
 	ercChValidationFailed = 0x13,
 	
