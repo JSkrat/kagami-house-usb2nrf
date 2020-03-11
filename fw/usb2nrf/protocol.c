@@ -7,7 +7,11 @@
 
 #include "../usb2nrf/protocol.h"
 #include "../usb2nrf/functions.h"
-#include "units_structure.h"
+#ifndef UNIT_TESTING
+    #include "../usb2nrf/units_structure.h"
+#else
+    #include "../usb2nrf_tests/units_structure.h"
+#endif
 #include <stdint.h>
 #include <string.h> // for NULL
 #include <stddef.h> // for offsetof
@@ -27,15 +31,15 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 		if (eFResetTransactionId != data->rqFunctionId)
 			return ercNotConsecutiveTransactionId;
 	}*/
+	// check if unit exists
+	if (UNITS_LENGTH <= data->rqUnitId) {
+		return ercBadUnitId;
+	}
 	// only basic check if unit 0 functions called for not unit 0 and vice versa
 	if ((0 == data->rqUnitId) != (0x10 > data->rqFunctionId)) {
 		return ercBadFunctionId;
 	}
 	if (_eFCount <= data->rqFunctionId) return ercBadFunctionId;
-	// check if unit exists
-	if (UNITS_LENGTH <= data->rqUnitId) {
-		return ercBadUnitId;
-	}
 	return ercOk;
 }
 
