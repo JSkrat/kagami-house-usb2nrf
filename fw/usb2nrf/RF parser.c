@@ -20,10 +20,13 @@ void parseRFPacket(tRfPacket *pkg);
 void dataTransmitted();
 void dataReceived();
 void transmissionFailed();
+void responseTimeoutEvent();
+void msEvent();
 
 nRF24L01 *rfTransiever;
 eRFMode RFMode;
 t_address ListenAddress;
+int responseTimeout = -1; // negative value means it is disabled, event triggered when it becomes disabled
 
 #ifndef UNIT_TESTING
 ISR(PCINT0_vect) {
@@ -63,6 +66,11 @@ ISR(PCINT0_vect) {
 
 	//checkTransieverRXBuf(/*true*/);
 }
+
+ISR(TIMER0_COMPA_vect) {
+	// this is being called every millisecond
+	msEvent();
+}
 #endif
 
 void rf_init() {
@@ -85,6 +93,11 @@ void rf_init() {
 	nRF24L01_begin(rfTransiever);
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
+	// now let's setup timer
+	TCCR0A = (1 << WGM01) | (0 << WGM00); // CTC mode
+	TCCR0B = (0 << CS02) | (1 << CS01) | (1 << CS00) | (0 << WGM02); // clk_io/64
+	OCR0A = 250; // compare match interrupt every millisecond
+	TIMSK0 = (1 << OCIE0A);
 #endif
 	RFMode = rmIdle;
 	protocolInit();
@@ -138,8 +151,12 @@ void dataReceived() {
 	total_requests++;
 	switch (RFMode) {
 		default:
-		case rmIdle:
 		case rmMaster: {
+			// disable timeout, we've received response
+			responseTimeout = -1;
+			// no break
+		}
+		case rmIdle: {
 			uartPacket.pkg.command = mcReceiveFromRF;
 			uartPacket.pkg.payloadSize = MAC_SIZE + request.msg.length;
 			memcpy(&(uartPacket.pkg.payload[0]), &(request.address[0]), MAC_SIZE);
@@ -167,8 +184,13 @@ void dataTransmitted() {
 	}*/
 	switch (RFMode) {
 		default:
-		case rmIdle:
 		case rmMaster: {
+			// and here we're waiting for the response, but not forever
+			responseTimeout = 20;
+			RFListen(&ListenAddress);
+			// no break
+		}
+		case rmIdle: {
 			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
 			/// TODO check if buffer has enough space for packet
 			createUAckResponse(&(uartPacket), &(request.address[0]));
@@ -205,6 +227,25 @@ void transmissionFailed() {
 			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
 			RFListen(&ListenAddress);
 			break;
+		}
+	}
+}
+
+void responseTimeoutEvent() {
+	// no response from the requested slave
+	union uPackage uartPacket;
+	t_address addr;
+	nRF24L01_read_register(rfTransiever, TX_ADDR, &(addr), MAC_SIZE);
+	/// TODO check if buffer has enough space for packet
+	createUAckResponse(&(uartPacket), &(addr[0]));
+	uartPacket.pkg.payload[MAC_SIZE] = 2;
+	uSendPacket(&uartPacket);
+}
+
+void msEvent() {
+	if (0 <= responseTimeout) {
+		if (0 > --responseTimeout) {
+			responseTimeoutEvent();
 		}
 	}
 }
