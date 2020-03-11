@@ -17,26 +17,59 @@
 
 void checkTransieverRXBuf(/*const bool listenAfterwards*/);
 void parseRFPacket(tRfPacket *pkg);
+void dataTransmitted();
+void dataReceived();
+void transmissionFailed();
+void responseTimeoutEvent();
+void msEvent();
 
 nRF24L01 *rfTransiever;
 eRFMode RFMode;
 t_address ListenAddress;
-
-enum eRFError {
-	ereNone = 0,
-	ereBadVersion = 0x90,
-	ereBadUnitId = 0xA0,
-	ereNotConsecutiveTransactionId = 0xB0,
-	ereBadFunctionId = 0xC0,
-	ereResponseTooBig = 0xD0,
-	
-} lastSentPacketStatus;
+int responseTimeout = -1; // negative value means it is disabled, event triggered when it becomes disabled
 
 #ifndef UNIT_TESTING
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
 	if (portTransiever & (1 << poTransiever_IRQ)) return;
-	checkTransieverRXBuf(/*true*/);
+	// The IRQ pin is activated when TX_DS IRQ, RX_DR IRQ or MAX_RT IRQ are set high 
+	// by the state machine in the STATUS register
+	nRF24L01_update_status(rfTransiever);
+	if (rfTransiever->status & _BV(TX_DS)) {
+		// Data Sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is acti-
+		// vated, this bit is set high only when ACK is received.
+		dataTransmitted();
+		uint8_t data = _BV(TX_DS);
+		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+	}
+	if (rfTransiever->status & _BV(MAX_RT)) {
+		// Maximum number of TX retransmits interrupt
+		// If MAX_RT is asserted it must be cleared to enable further communication.
+		transmissionFailed();
+		uint8_t data = _BV(MAX_RT);
+		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+	}
+	if (rfTransiever->status & _BV(RX_DR)) {
+		// Data Ready RX FIFO interrupt. Asserted when new data arrives RX FIFO
+		// The RX_DR IRQ is asserted by a new packet arrival event. 
+		// The procedure for handling this interrupt should be:
+		// 1) read payload through SPI, 
+		// 2) clear RX_DR IRQ, 
+		// 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO, 
+		// 4) if there are more data in RX FIFO, repeat from step 1).
+		do {
+			dataReceived();
+			uint8_t data = _BV(RX_DR);
+			nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+		} while (nRF24L01_data_received(rfTransiever));
+	}
+
+	//checkTransieverRXBuf(/*true*/);
+}
+
+ISR(TIMER0_COMPA_vect) {
+	// this is being called every millisecond
+	msEvent();
 }
 #endif
 
@@ -60,6 +93,11 @@ void rf_init() {
 	nRF24L01_begin(rfTransiever);
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
+	// now let's setup timer
+	TCCR0A = (1 << WGM01) | (0 << WGM00); // CTC mode
+	TCCR0B = (0 << CS02) | (1 << CS01) | (1 << CS00) | (0 << WGM02); // clk_io/64
+	OCR0A = 250; // compare match interrupt every millisecond
+	TIMSK0 = (1 << OCIE0A);
 #endif
 	RFMode = rmIdle;
 	protocolInit();
@@ -85,90 +123,129 @@ void createUAckResponse(union uPackage *packet, uint8_t *address) {
 	packet->pkg.payload[MAC_SIZE] = 0;
 }
 
-/**
- * check status of transmitted packet and queue according uart packet
- * ACK with code 0 (ack timeout), code 1 (ack received), no ack payload transmitted yet
- * and received data packets
- */
-void checkTransieverRXBuf(/*const bool listenAfterwards*/) {
+void dataReceived() {
+	// event, one per received packet
 	tRfPacket request;
-	//nRF24L01Message msg;
 	union uPackage uartPacket;
-	//uint8_t pipeAddress[MAC_SIZE];
-	// this will return -2 if there was no ack packet received/timeouted
-	int txState = nRF24L01_transmit_success(rfTransiever);
-	if (-1 == txState) {
-		// no ack received n times
-		ack_timeouts++;
-		if (rmIdle == RFMode || rmMaster == RFMode) {
-			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
-			/// TODO check if buffer has enough space for packet
-			createUAckResponse(&(uartPacket), &(request.address[0]));
-			uartPacket.pkg.payload[MAC_SIZE] = 1;
+	nRF24L01_read_received_data(rfTransiever, &(request.msg));
+	// assemble packet for uart
+	/// TODO check if buffer has enough space for packet
+	// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
+	nRF24L01_read_register(rfTransiever, RX_ADDR_P1, &(request.address), MAC_SIZE);
+	switch (request.msg.pipe_number) {
+		case 0: {
+			nRF24L01_read_register(rfTransiever, RX_ADDR_P0, &(request.address), MAC_SIZE);
+			break;
+		}
+		// pipe 1 address is already pre-filled, so do nothing
+		case 1: break;
+		// overwrite last byte of address
+		case 2:
+		case 3:
+		case 4:
+		case 5: {
+			nRF24L01_read_register(rfTransiever, RX_ADDR_P2 - 2 + request.msg.pipe_number, &(request.address[MAC_SIZE-1]), 1);
+			break;
+		}
+	}
+	total_requests++;
+	switch (RFMode) {
+		default:
+		case rmMaster: {
+			// disable timeout, we've received response
+			responseTimeout = -1;
+			// no break
+		}
+		case rmIdle: {
+			uartPacket.pkg.command = mcReceiveFromRF;
+			uartPacket.pkg.payloadSize = MAC_SIZE + request.msg.length;
+			memcpy(&(uartPacket.pkg.payload[0]), &(request.address[0]), MAC_SIZE);
+			memcpy(&(uartPacket.pkg.payload[MAC_SIZE]), &(request.msg.data[0]), request.msg.length);
 			uSendPacket(&uartPacket);
-		} else if (rmSlave == RFMode) {
-			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
+			break;
+		}
+		case rmSlave: {
+			// in slave mode we need to respond to that packet and listen again
+			parseRFPacket(&request);
+			break;
+		}
+	}
+}
+
+void dataTransmitted() {
+	// ack received, tx successful
+	tRfPacket request;
+	union uPackage uartPacket;
+	//rfPacketsSent++;
+	/*if (0x80 > lastSentPacketStatus) {
+		ok_responses++;
+	} else {
+		error_responses++;
+	}*/
+	switch (RFMode) {
+		default:
+		case rmMaster: {
+			// and here we're waiting for the response, but not forever
+			responseTimeout = 20;
 			RFListen(&ListenAddress);
+			// no break
 		}
-	} else if (0 == txState) {
-		// ack received, tx successful
-		//rfPacketsSent++;
-		switch (lastSentPacketStatus) {
-			case ereNotConsecutiveTransactionId: {
-				transaction_errors++;
-			}
-			default: {
-				if (0x80 > lastSentPacketStatus) {
-					ok_responses++;
-				} else {
-					error_responses++;
-				}
-			}
-		}
-		if (rmIdle == RFMode || rmMaster == RFMode) {
+		case rmIdle: {
 			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
 			/// TODO check if buffer has enough space for packet
 			createUAckResponse(&(uartPacket), &(request.address[0]));
 			uartPacket.pkg.payload[MAC_SIZE] = 0;
 			uSendPacket(&uartPacket);
 			//nRF24L01_listen(rfTransiever, 0, &(pipeAddress[0]));
-		} else if (rmSlave == RFMode) {
+			break;
+		}
+		case rmSlave: {
 			// ack can be only for our response, so we know here transaction is done, we're back in listen state
 			RFListen(&ListenAddress);
+			break;
 		}
 	}
-	while (nRF24L01_data_received(rfTransiever)) {
-		nRF24L01_read_received_data(rfTransiever, &(request.msg));
-		// assemble packet for uart
-		/// TODO check if buffer has enough space for packet
-		// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
-		nRF24L01_read_register(rfTransiever, RX_ADDR_P1, &(request.address), MAC_SIZE);
-		switch (request.msg.pipe_number) {
-			case 0: {
-				nRF24L01_read_register(rfTransiever, RX_ADDR_P0, &(request.address), MAC_SIZE);
-				break;
-			}
-			// pipe 1 address is already pre-filled, so do nothing
-			case 1: break;
-			// overwrite last byte of address
-			case 2:
-			case 3:
-			case 4:
-			case 5: {
-				nRF24L01_read_register(rfTransiever, RX_ADDR_P2 - 2 + request.msg.pipe_number, &(request.address[MAC_SIZE-1]), 1);
-				break;
-			}
-		}
-		total_requests++;
-		if (rmIdle == RFMode || rmMaster == RFMode) {
-			uartPacket.pkg.command = mcReceiveFromRF;
-			uartPacket.pkg.payloadSize = MAC_SIZE + request.msg.length;
-			memcpy(&(uartPacket.pkg.payload[0]), &(request.address[0]), MAC_SIZE);
-			memcpy(&(uartPacket.pkg.payload[MAC_SIZE]), &(request.msg.data[0]), request.msg.length);
+}
+
+void transmissionFailed() {
+	// no ack received n times
+	tRfPacket request;
+	union uPackage uartPacket;
+	ack_timeouts++;
+	switch (RFMode) {
+		default:
+		case rmIdle:
+		case rmMaster: {
+			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request.address), MAC_SIZE);
+			/// TODO check if buffer has enough space for packet
+			createUAckResponse(&(uartPacket), &(request.address[0]));
+			uartPacket.pkg.payload[MAC_SIZE] = 1;
 			uSendPacket(&uartPacket);
-		} else {
-			// in slave mode we need to respond to that packet and listen again
-			parseRFPacket(&request);
+			break;
+		}
+		case rmSlave: {
+			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
+			RFListen(&ListenAddress);
+			break;
+		}
+	}
+}
+
+void responseTimeoutEvent() {
+	// no response from the requested slave
+	union uPackage uartPacket;
+	t_address addr;
+	nRF24L01_read_register(rfTransiever, TX_ADDR, &(addr), MAC_SIZE);
+	/// TODO check if buffer has enough space for packet
+	createUAckResponse(&(uartPacket), &(addr[0]));
+	uartPacket.pkg.payload[MAC_SIZE] = 2;
+	uSendPacket(&uartPacket);
+}
+
+void msEvent() {
+	if (0 <= responseTimeout) {
+		if (0 > --responseTimeout) {
+			responseTimeoutEvent();
 		}
 	}
 }
@@ -214,8 +291,8 @@ void setListenAddress(t_address *address) {
 
 void parseRFPacket(tRfPacket *pkg) {
 	tRfPacket response;
-	// copy address, version, transaction id
-	memcpy(&response, pkg, sizeof(tRfPacket)); // should be 39 bytes
+	// copy address
+	memcpy(&response.address, pkg->address, sizeof(t_address));
 	// minimum response size if 3 bytes: version, transaction id, response code
 	// data is the last field, so its starting is minimal length of the packet
 	generateResponse(pkg->msg.length, pkg->msg.data, &(response.msg.length), (uint8_t*) &(response.msg.data));
