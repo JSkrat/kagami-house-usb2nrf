@@ -75,7 +75,7 @@ void SerialThread::run()
             // read response
             if (serial.waitForReadyRead(currentWaitTimeout)) {
                 QByteArray responseData = serial.readAll();
-                while (serial.waitForReadyRead(10))
+                while (serial.waitForReadyRead(currentWaitTimeout))
                     responseData += serial.readAll();
                 // unstuff here <--
                 for (char c: responseData) {

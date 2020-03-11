@@ -110,7 +110,7 @@ void MainWindow::addEtcMessage(QByteArray from, QString message) {
 void MainWindow::statusUpgrade()
 {
     /// request modem status upgrade
-    this->serial.transaction(this->port, 10, QByteArray(1, '\x00'));
+    this->serial.transaction(this->port, 50, QByteArray(1, '\x00'));
 }
 
 void MainWindow::serialResponse(const uint8_t command, const QByteArray &response)
