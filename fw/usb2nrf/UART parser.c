@@ -101,11 +101,14 @@ void processPacket() {
 	switch (reqBuffer.pkg.command) {
 		case mcStatus: {
 			respBuffer.pkg.payloadSize = 0x13;
-			for (int i = 0x00; i < 0x0A; i++) {
+			for (int i = 0x00; i <= 0x09; i++) {
 				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i]), 1);
 			}
-			for (int i = 0x11; i < 0x18; i++) {
+			for (int i = 0x11; i <= 0x17; i++) {
 				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x11 + 0x0A]), 1);
+			}
+			for (int i = 0x1C; i <= 0x1D; i++) {
+				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x1C + 0x11]), 1);
 			}
 			//*((uint16_t*) (respBuffer.pkg.payload+1)) = rfPacketsSent;
 			//*((uint16_t*) (respBuffer.pkg.payload+3)) = rfTimeouts;
