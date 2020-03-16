@@ -50,6 +50,7 @@ void SerialThread::run()
 
             if (currentPortName.isEmpty()) {
                 emit this->error(tr("No port name specified"));
+                this->msgQueue.dequeue();
                 return;
             }
         } else {
@@ -66,6 +67,7 @@ void SerialThread::run()
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit this->error(tr("Can't open %1, error code %2")
                            .arg(currentPortName).arg(serial.error()));
+                this->msgQueue.dequeue();
                 return;
             }
         }

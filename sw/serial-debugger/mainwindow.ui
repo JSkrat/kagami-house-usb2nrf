@@ -1504,18 +1504,18 @@ Shockburst</string>
       <string notr="true">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2';&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffeeee;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-weight:600; background-color:#ffeeee;&quot;&gt;Send to 11:22:33:44:55 &lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:small; color:#808080; background-color:#ffeeee;&quot;&gt;ACK&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2';&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffeeee;&quot;&gt;&lt;span style=&quot; font-family:'monospace'; background-color:#ffeeee;&quot;&gt;00:11:22:33&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2';&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#eeffee;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-weight:600; background-color:#eeffee;&quot;&gt;Receive from 11:22:33:44:55&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2';&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#eeffee;&quot;&gt;&lt;span style=&quot; font-family:'monospace'; background-color:#eeffee;&quot;&gt;00:11:22:33&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffeeee;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600; background-color:#ffeeee;&quot;&gt;Send to 11:22:33:44:55 &lt;/span&gt;&lt;span style=&quot; font-size:8pt; color:#808080; background-color:#ffeeee;&quot;&gt;ACK&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffeeee;&quot;&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; background-color:#ffeeee;&quot;&gt;00:11:22:33&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#eeffee;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600; background-color:#eeffee;&quot;&gt;Receive from 11:22:33:44:55&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#eeffee;&quot;&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; background-color:#eeffee;&quot;&gt;00:11:22:33&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="placeholderText">
       <string>(no data yet)</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="pbListen">
      <property name="geometry">
       <rect>
        <x>230</x>
@@ -1541,11 +1541,11 @@ p, li { white-space: pre-wrap; }
       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffcccc;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; background-color:#ffcccc;&quot;&gt;Sent message&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ccb3b3;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; background-color:#ccb3b3;&quot;&gt;Sent message status&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffcc;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; background-color:#ffffcc;&quot;&gt;ACK for sent message&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ccffcc;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; background-color:#ccffcc;&quot;&gt;Received message&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffcccc;&quot;&gt;&lt;span style=&quot; font-size:8pt; background-color:#ffcccc;&quot;&gt;Sent message&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ccb3b3;&quot;&gt;&lt;span style=&quot; font-size:8pt; background-color:#ccb3b3;&quot;&gt;Sent message status&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffcc;&quot;&gt;&lt;span style=&quot; font-size:8pt; background-color:#ffffcc;&quot;&gt;ACK for sent message&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ccffcc;&quot;&gt;&lt;span style=&quot; font-size:8pt; background-color:#ccffcc;&quot;&gt;Received message&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="leAddressListen">
@@ -1574,7 +1574,7 @@ p, li { white-space: pre-wrap; }
       <string>00:00:00:00:AB</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_3">
+    <widget class="QPushButton" name="pbTransmitTo">
      <property name="geometry">
       <rect>
        <x>230</x>
@@ -1613,7 +1613,7 @@ p, li { white-space: pre-wrap; }
       <string>Payload to transmit</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_4">
+    <widget class="QPushButton" name="pbClearTx">
      <property name="geometry">
       <rect>
        <x>350</x>
@@ -1626,7 +1626,7 @@ p, li { white-space: pre-wrap; }
       <string>Clear TX queue</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_5">
+    <widget class="QPushButton" name="pbSetModeMaster">
      <property name="geometry">
       <rect>
        <x>350</x>
@@ -1639,7 +1639,7 @@ p, li { white-space: pre-wrap; }
       <string>Set mode &quot;Master&quot;</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_6">
+    <widget class="QPushButton" name="pbSetModeSlave">
      <property name="geometry">
       <rect>
        <x>350</x>
@@ -1652,7 +1652,7 @@ p, li { white-space: pre-wrap; }
       <string>Set mode &quot;Slave&quot;</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_7">
+    <widget class="QPushButton" name="pbSetModeDebug">
      <property name="geometry">
       <rect>
        <x>350</x>
@@ -1665,7 +1665,7 @@ p, li { white-space: pre-wrap; }
       <string>Set mode &quot;Debug&quot;</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_8">
+    <widget class="QPushButton" name="pbSetMasterAddress">
      <property name="geometry">
       <rect>
        <x>350</x>
@@ -1712,7 +1712,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1179</width>
-     <height>31</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

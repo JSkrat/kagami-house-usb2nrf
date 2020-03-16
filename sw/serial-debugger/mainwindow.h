@@ -36,26 +36,26 @@ private slots:
 
     void on_checkBox_stateChanged(int arg1);
 
-    void on_pushButton_2_clicked();
+    void on_pbClearTx_clicked();
 
-    void on_pushButton_3_clicked();
+    void on_pbSetModeMaster_clicked();
 
-    void on_pushButton_4_clicked();
+    void on_pbSetModeSlave_clicked();
 
-    void on_pushButton_5_clicked();
+    void on_pbSetModeDebug_clicked();
 
-    void on_pushButton_6_clicked();
+    void on_pbSetMasterAddress_clicked();
 
-    void on_pushButton_7_clicked();
+    void on_pbListen_clicked();
 
-    void on_pushButton_8_clicked();
+    void on_pbTransmitTo_clicked();
 
 private:
     Ui::MainWindow *ui;
 
     QTimer StatusUpgradeTimer;
     SerialThread serial;
-    QString port = "COM8";
+    QString port = "COM3";
     void setCheckBoxValue(QCheckBox *checkbox, bool value);
 };
 #endif // MAINWINDOW_H

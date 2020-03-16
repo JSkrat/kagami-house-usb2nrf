@@ -326,11 +326,53 @@ void MainWindow::on_checkBox_stateChanged(int arg1)
     }
 }
 
-/**
- * @brief MainWindow::on_pushButton_2_clicked
- * send "listen" command
- */
-void MainWindow::on_pushButton_2_clicked()
+void MainWindow::on_pbClearTx_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcClearTX);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "clear tx queue");
+}
+
+void MainWindow::on_pbSetModeMaster_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(2);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Master");
+}
+
+void MainWindow::on_pbSetModeSlave_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(1);
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Slave");
+}
+
+void MainWindow::on_pbSetModeDebug_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetMode);
+    pkt.append(static_cast<char>(0));
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt, "Set mode Debug");
+}
+
+void MainWindow::on_pbSetMasterAddress_clicked()
+{
+    QByteArray pkt;
+    pkt.append(mcSetListenAddress);
+    for (QString b: this->ui->leAddressListen->text().split(":")) {
+        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
+    }
+    this->serial.transaction(this->port, 10, pkt);
+    this->addEtcMessage(pkt.mid(1), "set master address");
+}
+
+void MainWindow::on_pbListen_clicked()
 {
     QByteArray pkt;
     pkt.append(mcListen);
@@ -341,11 +383,7 @@ void MainWindow::on_pushButton_2_clicked()
     this->addEtcMessage(pkt.mid(1), "listen");
 }
 
-/**
- * @brief MainWindow::on_pushButton_3_clicked
- * send "transmit" command
- */
-void MainWindow::on_pushButton_3_clicked()
+void MainWindow::on_pbTransmitTo_clicked()
 {
     QByteArray pkt;
     pkt.append(mcTransmit);
@@ -357,51 +395,4 @@ void MainWindow::on_pushButton_3_clicked()
     }
     this->serial.transaction(this->port, 10, pkt);
     this->addSendMessage(pkt.mid(1, 5), pkt.mid(6));
-
-}
-
-void MainWindow::on_pushButton_4_clicked()
-{
-    QByteArray pkt;
-    pkt.append(mcClearTX);
-    this->serial.transaction(this->port, 10, pkt);
-    this->addEtcMessage(pkt, "clear tx queue");
-}
-
-void MainWindow::on_pushButton_5_clicked()
-{
-    QByteArray pkt;
-    pkt.append(mcSetMode);
-    pkt.append(2);
-    this->serial.transaction(this->port, 10, pkt);
-    this->addEtcMessage(pkt, "Set mode Master");
-}
-
-void MainWindow::on_pushButton_6_clicked()
-{
-    QByteArray pkt;
-    pkt.append(mcSetMode);
-    pkt.append(1);
-    this->serial.transaction(this->port, 10, pkt);
-    this->addEtcMessage(pkt, "Set mode Slave");
-}
-
-void MainWindow::on_pushButton_7_clicked()
-{
-    QByteArray pkt;
-    pkt.append(mcSetMode);
-    pkt.append(static_cast<char>(0));
-    this->serial.transaction(this->port, 10, pkt);
-    this->addEtcMessage(pkt, "Set mode Debug");
-}
-
-void MainWindow::on_pushButton_8_clicked()
-{
-    QByteArray pkt;
-    pkt.append(mcSetListenAddress);
-    for (QString b: this->ui->leAddressListen->text().split(":")) {
-        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
-    }
-    this->serial.transaction(this->port, 10, pkt);
-    this->addEtcMessage(pkt.mid(1), "set master address");
 }
