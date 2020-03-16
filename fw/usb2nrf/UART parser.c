@@ -185,7 +185,7 @@ void processPacket() {
 				respBuffer.pkg.payload[0] = 1;
 				break;
 			}
-			checkTransieverRXBuf();
+			//checkTransieverRXBuf();
 			_delay_us(10);
 			tRfPacket packet;
 			memcpy(packet.address, reqBuffer.pkg.payload, MAC_SIZE);
