@@ -55,7 +55,6 @@ private:
     QByteArray stuffByte(int8_t byte);
     QByteArray stuffBytes(const QByteArray &from);
     void parseByte(uint8_t byte);
-    void finishTransaction();
 };
 
 #endif // SERIALTHREAD_H
