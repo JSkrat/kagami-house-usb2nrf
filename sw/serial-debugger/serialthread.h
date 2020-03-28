@@ -23,7 +23,7 @@ public:
     explicit SerialThread(QObject *parent = nullptr);
     ~SerialThread();
     void transaction(const QString &portName, int waitTimeout, const QByteArray &request);
-
+    int getQueueSize();
 //    void queueMessage(QByteArray request);
 
 signals:

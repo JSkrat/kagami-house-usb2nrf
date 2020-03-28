@@ -100,6 +100,19 @@
       <number>20</number>
      </property>
     </widget>
+    <widget class="QLabel" name="lQueueSize">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>30</y>
+       <width>68</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>queue size</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">

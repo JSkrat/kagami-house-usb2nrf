@@ -32,6 +32,11 @@ void SerialThread::transaction(const QString &portName, int waitTimeout, const Q
     this->m_cond.wakeOne();
 }
 
+int SerialThread::getQueueSize()
+{
+    return this->msgQueue.size();
+}
+
 
 
 void SerialThread::run()
