@@ -32,6 +32,8 @@ void SerialThread::transaction(const QString &portName, int waitTimeout, const Q
     this->m_cond.wakeOne();
 }
 
+
+
 void SerialThread::run()
 {
     bool currentPortNameChanged = false;
@@ -50,7 +52,7 @@ void SerialThread::run()
 
             if (currentPortName.isEmpty()) {
                 emit this->error(tr("No port name specified"));
-                this->msgQueue.dequeue();
+                this->finishTransaction();
                 return;
             }
         } else {
@@ -67,7 +69,7 @@ void SerialThread::run()
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit this->error(tr("Can't open %1, error code %2")
                            .arg(currentPortName).arg(serial.error()));
-                this->msgQueue.dequeue();
+                this->finishTransaction();
                 return;
             }
         }
@@ -91,7 +93,7 @@ void SerialThread::run()
             emit this->timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-        this->msgQueue.dequeue();
+        this->finishTransaction();
     }
 }
 
@@ -213,6 +215,12 @@ void SerialThread::parseByte(uint8_t byte) {
         break;
     }
     }
+}
+
+void SerialThread::finishTransaction()
+{
+    this->msgQueue.dequeue();
+    this->m_cond.wakeAll();
 }
 
 QByteArray SerialThread::stuffByte(int8_t byte)
