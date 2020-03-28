@@ -14,22 +14,17 @@ SerialThread::SerialThread(QObject *parent) : QThread(parent)
 SerialThread::~SerialThread() {
     this->m_mutex.lock();
     this->m_quit = true;
-    this->m_cond.wakeOne();
+    this->m_cond.wakeAll();
     this->m_mutex.unlock();
     wait();
 }
 
 void SerialThread::transaction(const QString &portName, int waitTimeout, const QByteArray &request)
 {
+    this->m_mutex.lock();
     this->msgQueue.enqueue(Message(request, portName, waitTimeout));
-//    const QMutexLocker locker(&m_mutex);
-//    this->m_portName = portName;
-//    this->m_waitTimeout = waitTimeout;
-//    this->m_request = request;
-//    if (!this->isRunning())
-//        start();
-//    else
-    this->m_cond.wakeOne();
+    this->m_cond.wakeAll();
+    this->m_mutex.unlock();
 }
 
 int SerialThread::getQueueSize()
@@ -48,8 +43,13 @@ void SerialThread::run()
 
     while (!this->m_quit) {
         this->m_mutex.lock();
-        m_cond.wait(&this->m_mutex);
-        if (this->msgQueue.isEmpty()) continue;
+        if (this->msgQueue.isEmpty()) {
+            m_cond.wait(&this->m_mutex);
+            // we have to re-check if queue is not empty even if mutex was unlocked
+            this->m_mutex.unlock();
+            continue;
+        }
+        this->m_mutex.unlock();
         Message *msg = &(this->msgQueue.head());
         if (currentPortName != msg->portName) {
             currentPortName = msg->portName;
@@ -57,14 +57,13 @@ void SerialThread::run()
 
             if (currentPortName.isEmpty()) {
                 emit this->error(tr("No port name specified"));
-                this->finishTransaction();
-                return;
+                this->msgQueue.dequeue();
+                continue;
             }
         } else {
             currentPortNameChanged = false;
         }
         currentWaitTimeout = msg->waitTimeout;
-        this->m_mutex.unlock();
 
         if (currentPortNameChanged) {
             serial.close();
@@ -74,8 +73,8 @@ void SerialThread::run()
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit this->error(tr("Can't open %1, error code %2")
                            .arg(currentPortName).arg(serial.error()));
-                this->finishTransaction();
-                return;
+                this->msgQueue.dequeue();
+                continue;
             }
         }
         // write request
@@ -98,7 +97,7 @@ void SerialThread::run()
             emit this->timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-        this->finishTransaction();
+        this->msgQueue.dequeue();
     }
 }
 
@@ -220,12 +219,6 @@ void SerialThread::parseByte(uint8_t byte) {
         break;
     }
     }
-}
-
-void SerialThread::finishTransaction()
-{
-    this->msgQueue.dequeue();
-    this->m_cond.wakeAll();
 }
 
 QByteArray SerialThread::stuffByte(int8_t byte)
