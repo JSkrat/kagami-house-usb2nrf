@@ -48,6 +48,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->leSerialPort->setText(this->port);
 
+    this->ui->statusbar->addPermanentWidget(this->ui->lQueueSize);
+
     this->StatusUpgradeTimer.setInterval(100);
     connect(&(this->StatusUpgradeTimer), &QTimer::timeout, this, &MainWindow::statusUpgrade);
     this->StatusUpgradeTimer.start();
@@ -74,6 +76,7 @@ void MainWindow::setCheckBoxValue(QCheckBox *checkbox, bool value)
 void MainWindow::serialTransaction(QByteArray data)
 {
     this->serial.transaction(this->port, this->ui->sbPortTimeout->value(), data);
+    this->ui->lQueueSize->setText(QString("serial msg queued: %1").arg(this->serial.getQueueSize()));
 }
 
 

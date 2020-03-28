@@ -57,5 +57,6 @@ private:
     SerialThread serial;
     QString port = "COM3";
     void setCheckBoxValue(QCheckBox *checkbox, bool value);
+    void serialTransaction(QByteArray data);
 };
 #endif // MAINWINDOW_H
