@@ -213,7 +213,7 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
             nullptr,
             nullptr,
             this->ui->cbTX_EMPTY,
-            this->ui->cbTX_FULL,
+            this->ui->cbTX_FULL_2,
             this->ui->cbTX_REUSE,
             nullptr,
         };
