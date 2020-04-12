@@ -11,7 +11,7 @@
 #include <avr/interrupt.h>
 #include <string.h>
 #include <util/delay.h>
-#include "RF parser.h"
+#include "../usb2nrf/RF model.h"
 #include "ui.h"
 
 void uSendPacket(union uPackage *packet);

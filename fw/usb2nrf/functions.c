@@ -9,14 +9,13 @@
 #include "../usb2nrf/protocol.h"
 #ifndef UNIT_TESTING
     #include "./units_structure.h"
-    #include "./RF parser.h"
+    #include "./RF model.h"
     #include <avr/pgmspace.h>
 #else
     #include "../usb2nrf_tests/units_structure.h"
-    #include "../usb2nrf_tests/RF parser.h"
+    #include "../usb2nrf_tests/RF model.h"
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
-#include "../usb2nrf/RF statistics.h"
 #include "../usb2nrf/protocol internal.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -72,7 +71,7 @@ uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString 
 	return ercOk;
 }
 
-uint8_t NOP(const uint8_t unit, const scString *request, sString *response) {
+uint8_t rfNOP(const uint8_t unit, const scString *request, sString *response) {
 	(void) unit;
 	(void) request;
 	(void) response;
@@ -230,7 +229,7 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
 	[eFSetAddress] = &setMACAddress,
 	[eFGetStatistics] = &getStatistics,
     [eFResetTransactionId] = &resetTransactionId,
-	[eFNOP] = &NOP,
+	[eFNOP] = &rfNOP,
 	
 	[eFGetPropertiesOfUnit] = &getPropertiesOfUnit,
 	[eFGetTextDescription] = &getTextDescription,
