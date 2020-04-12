@@ -6,6 +6,8 @@
 #include "messages.h"
 //#include "main.h"
 
+//#define LCD_HUGE_FONT
+//#define LCD_CYRILLIC_FONT
 #define charDataWidth ((uint8_t) 5)
 #define charWidth ((uint8_t) 6)
 #define bigCharDataWidth ((uint8_t) 20)
@@ -106,6 +108,8 @@ const uint8_t font_1[] PROGMEM = {
     0b00001100, 0b01010000, 0b01010000, 0b01010000, 0b00111100, // y
     0b01100100, 0b01010100, 0b01010100, 0b01010100, 0b01001100  // z
 };
+
+#ifdef LCD_CYRILLIC_FONT
 const uint8_t font_2[] PROGMEM = {
     0b01111111, 0b01001001, 0b01001001, 0b01001001, 0b00110001, // Б
     0b01111111, 0b00000001, 0b00000001, 0b00000001, 0b00000001, // Г
@@ -157,7 +161,9 @@ const uint8_t font_3[] PROGMEM = {
     0b00111110, 0b00100000, 0b00100000, 0b00111110, 0b01100000, // ц
     0b00111110, 0b00100000, 0b00111100, 0b00100000, 0b01111110  // щ
 };
+#endif
 
+#ifdef LCD_HUGE_FONT
 const uint8_t big_digits_lcd12x16[] PROGMEM = {
     0xFF, 0xFF, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0xFF, 0xFF,  0x3F, 0x3F, 0x30, 0x30, 0x30,  0x30, 0x30, 0x30, 0x3F, 0x3F,  // Code for char 0
     0x00, 0x00, 0x03, 0x03, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00, 0x3F,  0x3F, 0x00, 0x00, 0x00, 0x00,  // Code for char 1
@@ -170,6 +176,7 @@ const uint8_t big_digits_lcd12x16[] PROGMEM = {
     0xFF, 0xFF, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xFF, 0xFF,  0x3F, 0x3F, 0x30, 0x30, 0x30,  0x30, 0x30, 0x30, 0x3F, 0x3F,  // Code for char 8
     0xFF, 0xFF, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xFF, 0xFF,  0x00, 0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x3F, 0x3F,  // Code for char 9
 };
+#endif
 
 void lcdInit() {
     // magic sequence of commands performs initialization of LC D
@@ -223,16 +230,24 @@ void lcdPrintChar(uint8_t symbol, tFontStyle style) { // 947 clocks (118us)+
     const uint8_t *start;
     if (! (style & huge)) {
         start = &font_1[0];
+#ifdef LCD_CYRILLIC_FONT
         if (symbol >= 0xE0) {
             start = (&font_3[0]) + ((uint16_t) symbol - 0xE0) * charDataWidth;
         } else if (symbol >= 0xA0) {
             start = (&font_2[0]) + ((uint16_t) symbol - 0xA0) * charDataWidth;
         } else if (symbol >= 0x20) {
+#else
+		if (symbol < 0xA0 && symbol >= 0x20) {
+#endif
             start = (&font_1[0]) + ((uint16_t) symbol - 0x21) * charDataWidth;
         } else return;
     } else {
+#ifdef LCD_HUGE_FONT
         if ((symbol < '0' || symbol > '9') && symbol != ' ') return;
         start = &big_digits_lcd12x16[0] + (symbol - '0') * bigCharDataWidth;
+#else
+		return;
+#endif
     }
 
     int8_t offset = 0-1;
