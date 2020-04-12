@@ -12,7 +12,7 @@
 #include <avr/eeprom.h>
 #include "defines.h"
 #include "UART parser.h"
-#include "RF parser.h"
+#include "RF model.h"
 #include "ui.h"
 #include "my-stdlib.h"
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"

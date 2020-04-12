@@ -17,15 +17,8 @@
 
 #include "../usb2nrf/defines.h"
 #include "../usb2nrf/nrf24l01.h"
+#include "../usb2nrf/nRF model.h"
 
-extern nRF24L01 *rfTransiever;
-
-typedef uint8_t t_address[MAC_SIZE];
-
-typedef struct {
-	t_address address;
-	nRF24L01Message msg;
-} tRfPacket;
 
 typedef enum {
 	rmIdle = 0,
@@ -36,6 +29,22 @@ typedef enum {
 
 //extern const eRFMode RFMode;
 //extern t_address MasterAddress;
+
+typedef uint8_t t_address[MAC_SIZE];
+
+typedef enum {
+	eptData = 0,
+	eptAckOk = 1,
+	eptAckTimeout = 2,
+	eptResponseTimeout = 3,
+} ePacketType;
+
+// 40 bytes long, no pointers
+typedef struct {
+	t_address address;
+	ePacketType type;
+	nRF24L01Message msg;
+} tRfPacket;
 
 void rf_init();
 void checkTransieverRXBuf();
