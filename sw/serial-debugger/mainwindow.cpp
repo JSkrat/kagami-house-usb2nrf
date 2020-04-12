@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->StatusUpgradeTimer.setInterval(100);
     connect(&(this->StatusUpgradeTimer), &QTimer::timeout, this, &MainWindow::statusUpgrade);
-    this->StatusUpgradeTimer.start();
+//    this->StatusUpgradeTimer.start();
 
     qRegisterMetaType<uint8_t>("uint8_t");
     connect(&(this->serial), &SerialThread::response, this, &MainWindow::serialResponse);
@@ -213,7 +213,7 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
             nullptr,
             nullptr,
             this->ui->cbTX_EMPTY,
-            this->ui->cbTX_FULL,
+            this->ui->cbTX_FULL_2,
             this->ui->cbTX_REUSE,
             nullptr,
         };
