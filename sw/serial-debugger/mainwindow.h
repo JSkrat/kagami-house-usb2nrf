@@ -55,7 +55,7 @@ private:
 
     QTimer StatusUpgradeTimer;
     SerialThread serial;
-    QString port = "COM3";
+    QString port = "COM8";
     void setCheckBoxValue(QCheckBox *checkbox, bool value);
     void serialTransaction(QByteArray data);
 };
