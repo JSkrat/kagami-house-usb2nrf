@@ -197,10 +197,22 @@
     <Compile Include="nRF model.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="string.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="UART functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="UART functions.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="UART parser.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="UART parser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="UART protocol.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="ui.c">

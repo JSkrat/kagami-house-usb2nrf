@@ -16,19 +16,10 @@
 #ifdef UNIT_TESTING
 	#pragma pack(push, 1)
 #endif
+#include "string.h"
 
 #define PROTOCOL_VERSION 0
 
-
-typedef struct {
-	uint8_t length;
-	uint8_t *data;
-} sString;
-
-typedef struct {
-	const uint8_t length;
-	const uint8_t *data;	
-} scString;
 
 // arguments are request and response
 // caller should allocate space for the response

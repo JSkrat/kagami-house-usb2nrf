@@ -16,34 +16,10 @@
 #include "messages.h"
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
+#include "../usb2nrf/UART functions.h"
 
 // packet prefixes
 #define uPPProtoVer 0
-
-// modem commands
-enum eModemCommand {
-	mcStatus = 0,
-	mcAddresses = 1,
-	
-	mcSetChannel = 0x10,
-	mcSetTXPower = 0x11,
-	mcSetBitRate = 0x12,
-	mcSetAutoRetransmitDelay = 0x13,
-	mcSetAutoRetransmitCount = 0x14,
-	
-	mcClearTX = 0x20,
-	mcClearRX = 0x21,
-	
-	mcListen = 0x30,
-	
-	mcSetMode = 0x40,
-	mcSetListenAddress = 0x41,
-	
-	mcTransmit = 0x7F,
-	
-	mcAckFromRF = 0xCC,
-	mcReceiveFromRF = 0xEE,
-};
 
 typedef enum {
 	usError,
@@ -59,7 +35,7 @@ typedef enum {
 union uPackage {
 	uint8_t packageBuffer[(HEADER_SIZE + PAYLOAD_SIZE)];
 	struct {
-		enum eModemCommand command;
+		eModemCommand command;
 		uint8_t payloadSize;
 		uint8_t payload[PAYLOAD_SIZE];
 	} pkg;
