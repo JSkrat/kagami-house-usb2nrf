@@ -10,7 +10,7 @@
 #define UNITS_STRUCTURE_H_
 #include <stdbool.h>
 #include <stdint.h>
-#include "protocol.h"
+#include "RF protocol.h"
 
 #ifndef UNIT_TESTING
 	#include <avr/pgmspace.h>
