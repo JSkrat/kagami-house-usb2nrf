@@ -9,7 +9,7 @@
 #ifndef FUNCTIONS_H_
 #define FUNCTIONS_H_
 
-#include "../usb2nrf/protocol.h"
+#include "../usb2nrf/RF protocol.h"
 #include <stdint.h>
 
 typedef enum {

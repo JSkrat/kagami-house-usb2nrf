@@ -5,7 +5,7 @@
  *  Author: Mintytail
  */ 
 
-#include "../usb2nrf/functions.h"
+#include "../usb2nrf/RF functions.h"
 #include "../usb2nrf/protocol.h"
 #ifndef UNIT_TESTING
     #include "./units_structure.h"
@@ -21,6 +21,7 @@
 #include <stdint.h>
 // for memcpy
 #include <string.h>
+#include "string.h"
 // if it is unit tests, it should be local file, not of main project one
 
 const uint8_t _dataTypeLength[] = {

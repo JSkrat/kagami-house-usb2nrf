@@ -13,7 +13,7 @@
 #endif
 #include <stdint.h>
 #include <string.h>
-#include "../usb2nrf/protocol.h"
+#include "../usb2nrf/RF protocol.h"
 
 void checkTransieverRXBuf(/*const bool listenAfterwards*/);
 void parseRFPacket(tRfPacket *pkg);

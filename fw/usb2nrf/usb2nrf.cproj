@@ -146,10 +146,10 @@
     <Compile Include="defines.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="functions.c">
+    <Compile Include="RF functions.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="functions.h">
+    <Compile Include="RF functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">
@@ -176,13 +176,13 @@
     <Compile Include="nrf24l01.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="protocol internal.h">
+    <Compile Include="RF protocol internal.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="protocol.c">
+    <Compile Include="RF protocol.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="protocol.h">
+    <Compile Include="RF protocol.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="RF model.c">

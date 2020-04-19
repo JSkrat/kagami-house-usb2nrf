@@ -5,8 +5,8 @@
  *  Author: Mintytail
  */ 
 
-#include "../usb2nrf/protocol.h"
-#include "../usb2nrf/functions.h"
+#include "../usb2nrf/RF protocol.h"
+#include "../usb2nrf/RF functions.h"
 #ifndef UNIT_TESTING
     #include "../usb2nrf/units_structure.h"
 #else
@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <string.h> // for NULL
 #include <stddef.h> // for offsetof
-#include "../usb2nrf/protocol internal.h"
+#include "../usb2nrf/RF protocol internal.h"
 
 
 enum eResponseCodes lastSentPacketStatus;
