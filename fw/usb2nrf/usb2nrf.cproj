@@ -212,6 +212,9 @@
     <Compile Include="UART parser.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="UART protocol.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="UART protocol.h">
       <SubType>compile</SubType>
     </Compile>

@@ -17,6 +17,7 @@
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
 #include "../usb2nrf/UART functions.h"
+#include "../usb2nrf/UART protocol.h"
 
 // packet prefixes
 #define uPPProtoVer 0
@@ -30,16 +31,6 @@ typedef enum {
 	usEnd,
 } usState;
 
-// packets from uart
-#define HEADER_SIZE (1 + 1)
-union uPackage {
-	uint8_t packageBuffer[(HEADER_SIZE + PAYLOAD_SIZE)];
-	struct {
-		eModemCommand command;
-		uint8_t payloadSize;
-		uint8_t payload[PAYLOAD_SIZE];
-	} pkg;
-} ;
 //union uPackage packageBuffer;
 
 //uint8_t sendBufferBegin;
@@ -52,7 +43,7 @@ void parse(unsigned char b);
 #define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)
 void uQueueChar(const uint8_t c);
 void uQueueString(const string *data);
-void uSendPacket(union uPackage *packet);
+void uSendPacket(uPackage *packet);
 
 
 #endif /* UART_PARSER_H_ */

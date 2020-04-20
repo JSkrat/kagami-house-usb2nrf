@@ -11,6 +11,7 @@
 
 #include "string.h"
 #include <avr/pgmspace.h>
+#include <stddef.h>
 
 
 typedef uint8_t (*fUARTFunction)(const scString*, sString*);
@@ -48,6 +49,8 @@ typedef struct {
 	fUARTFunction function;
 } tUARTCommandItem;
 
-extern const PROGMEM tUARTCommandItem UARTFunctions[];
+
+#define UART_FUNCTIONS_NUMBER 14
+extern const tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER];
 
 #endif /* UART_FUNCTIONS_H_ */
