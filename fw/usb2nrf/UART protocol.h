@@ -10,6 +10,7 @@
 #define UART_PROTOCOL_H_
 #include "defines.h"
 #include <stdint.h>
+#include <stdbool.h>
 #include "../usb2nrf/UART functions.h"
 
 typedef enum {
@@ -23,14 +24,19 @@ typedef enum {
 } eUARTResponseCodes;
 
 // packets from uart
-#define HEADER_SIZE (1 + 1)
+#define HEADER_SIZE (3)
 typedef union {
 	uint8_t packageBuffer[(HEADER_SIZE + PAYLOAD_SIZE)];
 	struct {
+		uint8_t protocolVersion;
 		eModemCommand command;
 		uint8_t payloadSize;
 		uint8_t payload[PAYLOAD_SIZE];
 	} pkg;
 } uPackage;
+
+void UARTProtocolInit();
+void UARTBeginTransaction();
+bool UARTProcessNextByte(uint8_t b, uPackage *response);
 
 #endif /* UART_PROTOCOL_H_ */

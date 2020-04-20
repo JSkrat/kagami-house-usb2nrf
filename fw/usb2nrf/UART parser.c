@@ -8,19 +8,18 @@
 #include "UART protocol.h"
 #include "defines.h"
 #include <stdint.h>
-#include "messages.h"
 #include <avr/interrupt.h>
 #include <string.h>
 #include <util/delay.h>
-#include "../usb2nrf/RF model.h"
-#include "ui.h"
+
+#define U_TRANSMIT_START UCSR0B |= (1 << UDRIE0)
 
 void uSendPacket(uPackage *packet);
+void uQueueChar(const uint8_t c);
+void parse(unsigned char b);
 
-static usState state;
-static uint8_t position = 0;
-static uPackage reqBuffer;
 static bool escActive;
+uPackage respBuffer;
 
 // +1 for make sure begin and end will be equal only at empty buffer
 #define SEND_BUFFER_SIZE ((1 + MAC_SIZE + PAYLOAD_SIZE + 1)*2)
@@ -47,8 +46,6 @@ void u_init() {
 	// asynchronous, 8N1
 	UCSR0C = (0b00 << UMSEL00) | (0b11 << UCSZ00) | (0b00 << UPM00) | (0 << USBS0);
 	
-	state = usError;
-	ui_subsystem_str(ui_s_uart_packet_fsm, &m_usNotInit, true);
 	// send invalid response to ensure uart settings are ok
 	uQueueChar(0xC0);
 	uQueueChar(0x00);
@@ -71,12 +68,6 @@ void uQueueBytes(const uint8_t *bytes, const uint8_t number) {
 	}
 }
 
-void uQueueString(const string *data) {
-	for (uint8_t p = 0; p < data->length; p++) {
-		uQueueChar(data->data[p]);
-	}
-}
-
 ISR(USART_RX_vect) {
 	// on not empty receive buffer
 	// error flags for current UDR0, must be read before reading UDR0
@@ -89,140 +80,21 @@ ISR(USART_UDRE_vect) {
 	// check if buffer is empty
 	if (sendBufferBegin == sendBufferEnd) {
 		UCSR0B &= ~(1 << UDRIE0);
-		// it's a little overkill, to check rf transiever every time uart buffer empty
-		//checkTransieverRXBuf();
 		return;
 	}
 	UDR0 = sendBuffer[sendBufferBegin++];
 	if (SEND_BUFFER_SIZE <= sendBufferBegin) sendBufferBegin = 0;
 }
 
-void processPacket() {
-	uPackage respBuffer;
-	switch (reqBuffer.pkg.command) {
-		case mcStatus: {
-			respBuffer.pkg.payloadSize = 0x13;
-			for (int i = 0x00; i <= 0x09; i++) {
-				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i]), 1);
-			}
-			for (int i = 0x11; i <= 0x17; i++) {
-				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x11 + 0x0A]), 1);
-			}
-			for (int i = 0x1C; i <= 0x1D; i++) {
-				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x1C + 0x11]), 1);
-			}
-			//*((uint16_t*) (respBuffer.pkg.payload+1)) = rfPacketsSent;
-			//*((uint16_t*) (respBuffer.pkg.payload+3)) = rfTimeouts;
-			//*((uint16_t*) (respBuffer.pkg.payload+5)) = badRFPackets;
-			break;
-		}
-		case mcAddresses: {
-			respBuffer.pkg.payloadSize = 0x13;
-			nRF24L01_read_register(rfTransiever, 0x0A, &(respBuffer.pkg.payload[0x00]), 5);
-			nRF24L01_read_register(rfTransiever, 0x0B, &(respBuffer.pkg.payload[0x05]), 5);
-			for (int i = 0x0C; i < 0x10; i++) {
-				nRF24L01_read_register(rfTransiever, i, &(respBuffer.pkg.payload[i - 0x0C + 0x0A]), 1);
-			}
-			nRF24L01_read_register(rfTransiever, 0x10, &(respBuffer.pkg.payload[0x0E]), 5);
-			break;
-		}
-		case mcSetChannel: {
-			nRF24L01_write_register(rfTransiever, RF_CH, &(reqBuffer.pkg.payload[1]), 1);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcSetBitRate: {
-			uint8_t rf_setup; 
-			nRF24L01_read_register(rfTransiever, RF_SETUP, &rf_setup, 1);
-			rf_setup &= ~((1 << RF_DR_LOW) | (1 << RF_DR_HIGH));
-			if (reqBuffer.pkg.payload[1] & 0b00000010) rf_setup |= (1 << RF_DR_LOW);
-			if (reqBuffer.pkg.payload[1] & 0b00000001) rf_setup |= (1 << RF_DR_HIGH);
-			nRF24L01_write_register(rfTransiever, RF_SETUP, &rf_setup, 1);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcSetTXPower: {
-			uint8_t rf_setup;
-			nRF24L01_read_register(rfTransiever, RF_SETUP, &rf_setup, 1);
-			rf_setup &= ~(0b00000011 << RF_PWR);
-			rf_setup |= (reqBuffer.pkg.payload[1] & 0b00000011) << RF_PWR;
-			nRF24L01_write_register(rfTransiever, RF_SETUP, &rf_setup, 1);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcClearTX: {
-			nRF24L01_flush_transmit_message(rfTransiever);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcListen: {
-			RFListen((t_address *) reqBuffer.pkg.payload);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcSetMode: {
-			respBuffer.pkg.payloadSize = 2;
-			eRFMode setMode = reqBuffer.pkg.payload[0];
-			eRFMode newMode = switchRFMode(setMode);
-			if (setMode == newMode) {
-				respBuffer.pkg.payload[0] = 0;
-			} else {
-				respBuffer.pkg.payload[0] = 1;
-			}
-			respBuffer.pkg.payload[1] = newMode;
-			break;
-		}
-		case mcSetListenAddress: {
-			setListenAddress((t_address *) reqBuffer.pkg.payload);
-			respBuffer.pkg.payloadSize = 1;
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcTransmit: {
-			respBuffer.pkg.payloadSize = 1;
-			if (MAC_SIZE > reqBuffer.pkg.payloadSize) {
-				respBuffer.pkg.payload[0] = 1;
-				break;
-			}
-			//checkTransieverRXBuf();
-			_delay_us(10);
-			tRfPacket packet;
-			memcpy(packet.address, reqBuffer.pkg.payload, MAC_SIZE);
-			packet.msg.length = reqBuffer.pkg.payloadSize - MAC_SIZE;
-			if (packet.msg.length) {
-				memcpy(packet.msg.data, reqBuffer.pkg.payload + MAC_SIZE, packet.msg.length);
-			}
-			transmitPacket(&packet);
-			respBuffer.pkg.payload[0] = 0;
-			break;
-		}
-		case mcSetAutoRetransmitDelay:
-		case mcSetAutoRetransmitCount:
-		case mcClearRX:
-		case mcAckFromRF:
-		case mcReceiveFromRF:
-			break;
-	}
-	// lets queue the answer
-	respBuffer.pkg.command = reqBuffer.pkg.command;
-	uSendPacket(&respBuffer);
-}
-
 void uSendPacket(uPackage *packet) {
 	uQueueChar(0xC0);
-	uQueueChar(uPPProtoVer);
 	for (int8_t i = 0; i < packet->pkg.payloadSize + HEADER_SIZE; i++) {
 		char c = packet->packageBuffer[i];
 		if (0 == i) c |= 0x80;
 		if (0xC0 == c) {
 			uQueueChar(0xDB);
 			c = 0xDC;
-			} else if (0xDB == c) {
+		} else if (0xDB == c) {
 			uQueueChar(0xDB);
 			c = 0xDD;
 		}
@@ -233,13 +105,11 @@ void uSendPacket(uPackage *packet) {
 
 /** \brief Parse commands from USART
  */
-void parse(unsigned char b)
-{
+void parse(unsigned char b) {
 	// byte stuffing (or escaping) first
 	switch (b) {
 		case 0xC0: {
-			state = usProtoVer;
-			ui_subsystem_str(ui_s_uart_packet_fsm, &m_usProtoVer, true);
+			UARTBeginTransaction();
 			escActive = false;
 			return;
 		}
@@ -262,62 +132,7 @@ void parse(unsigned char b)
 			break;
 		}
 	}
-	// now parsing UART frame
-	switch (state) {
-		case usEnd:
-		case usError: {
-			//ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
-			break;
-		}
-		case usProtoVer: {
-			if (uPPProtoVer == b) {
-				state = usCommand;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usCommand, true);
-			} else {
-				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorProto, true);
-			}
-			break;
-		}
-		case usCommand: {
-			if (0x80 & b) {
-				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorCmd, true);
-			} else {
-				reqBuffer.pkg.command = b;
-				state = usPDataLength;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usPDataLength, true);
-			}
-			break;
-		}
-		case usPDataLength: {
-			if (PAYLOAD_SIZE + MAC_SIZE <= b) {
-				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorLength, true);
-				break;
-			}
-			reqBuffer.pkg.payloadSize = b;
-			position = 0;
-			if (0 == b) {
-				// there won't be any bytes from that package anymore
-				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usEnd, true);
-				processPacket();
-			} else {
-				state = usPData;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usPData, true);
-			}
-			break;
-		}
-		case usPData: {
-			reqBuffer.pkg.payload[position++] = b;
-			if (reqBuffer.pkg.payloadSize <= position) {
-				// that's all payload, no bytes from that package left
-				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usEnd, true);
-				processPacket();
-			}
-			break;
-		}
-	}
+	if (UARTProcessNextByte(b, &respBuffer)) {
+		uSendPacket(&respBuffer);
+	}	
 }
