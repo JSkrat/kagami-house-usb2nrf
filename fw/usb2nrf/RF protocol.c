@@ -11,6 +11,7 @@
     #include "../usb2nrf/units_structure.h"
 #else
     #include "../usb2nrf_tests/units_structure.h"
+    #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include <stdint.h>
 #include <string.h> // for NULL
@@ -18,7 +19,7 @@
 #include "../usb2nrf/RF protocol internal.h"
 
 
-enum eResponseCodes lastSentPacketStatus;
+//static enum eResponseCodes lastSentPacketStatus;
 
 
 enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
@@ -51,10 +52,10 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	enum eResponseCodes validation = validatePacket(requestLength, REQUEST_DATA);
 	RESPONSE_DATA->rsVersion = PROTOCOL_VERSION;
 	RESPONSE_DATA->rsTransactionId = REQUEST_DATA->rqTransactionId;
-	RESPONSE_DATA->rsCode = validation;
+    RESPONSE_DATA->rsCode = (uint8_t) validation;
 	switch (validation) {
 		case ercOk: {
-            fRFFunction method = pgm_read_ptr(&(RFFunctions[REQUEST_DATA->rqFunctionId]));
+            fRFFunction method = (fRFFunction) pgm_read_ptr(&(RFFunctions[REQUEST_DATA->rqFunctionId]));
 			if (NULL == method) {
 				RESPONSE_DATA->rsCode = ercBadFunctionId;
 				break;

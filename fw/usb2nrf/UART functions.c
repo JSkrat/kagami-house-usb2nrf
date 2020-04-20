@@ -5,7 +5,7 @@
  *  Author: Mintytail
  */ 
 #include "UART functions.h"
-#include "string.h"
+#include "sstring.h"
 #include "UART protocol.h"
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"

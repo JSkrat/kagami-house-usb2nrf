@@ -19,8 +19,6 @@
 
 extern nRF24L01 *rfTransiever;
 
-extern uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
-
 typedef void (*fNRFCallback)(void);
 extern fNRFCallback cNRF_DataTransmitted, cNRF_DataReceived, cNRF_TransmissionFailed;
 

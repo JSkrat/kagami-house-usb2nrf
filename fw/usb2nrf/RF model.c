@@ -6,6 +6,7 @@
  */
 #include "../usb2nrf/RF model.h"
 #include "../usb2nrf/nRF model.h"
+#include "../usb2nrf/RF info.h"
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #ifndef UNIT_TESTING
@@ -15,24 +16,24 @@
 #include <string.h>
 #include "../usb2nrf/RF protocol.h"
 
-void checkTransieverRXBuf(/*const bool listenAfterwards*/);
+void checkTransieverRXBuf(void);
 void parseRFPacket(tRfPacket *pkg);
-void dataTransmitted();
-void dataReceived();
-void transmissionFailed();
-void responseTimeoutEvent();
-void msEvent();
+void dataTransmitted(void);
+void dataReceived(void);
+void transmissionFailed(void);
+void responseTimeoutEvent(void);
+void msEvent(void);
 
-eRFMode RFMode;
-t_address ListenAddress;
-int responseTimeout = -1; // negative value means it is disabled, event triggered when it becomes disabled
+static eRFMode RFMode;
+static t_address ListenAddress;
+static int responseTimeout = -1; // negative value means it is disabled, event triggered when it becomes disabled
 
 #define RFBUFFER_SIZE 8
-tRfPacket RFBuffer[RFBUFFER_SIZE];
+static tRfPacket RFBuffer[RFBUFFER_SIZE];
 // push to the end, pop from the begin
 // begin points to the next item
 // end points to the next free space
-int rfbBegin = 0, rfbEnd = 0, rfbSize = 0;
+static int rfbBegin = 0, rfbEnd = 0, rfbSize = 0;
 
 #ifndef UNIT_TESTING
 ISR(TIMER0_COMPA_vect) {
@@ -211,7 +212,7 @@ void transmitPacket(tRfPacket *packet) {
 eRFMode switchRFMode(eRFMode newMode) {
 	if (rmGetMode <= newMode) {
 		return RFMode;
-	};
+    }
 	RFMode = newMode;
 	switch (RFMode) {
 		case rmIdle: {
@@ -229,7 +230,7 @@ eRFMode switchRFMode(eRFMode newMode) {
 			break;
 	}
 	return RFMode;
-};
+}
 
 void setListenAddress(t_address *address) {
 	// write address and re-listen if we're slave

@@ -11,8 +11,9 @@
 
 #ifndef RF_PARSER_H_
 #define RF_PARSER_H_
+
 #ifdef UNIT_TESTING
-	#pragma pack(1, push)
+    #pragma pack(push, 1)
 #endif
 
 #include "../usb2nrf/defines.h"
@@ -56,4 +57,5 @@ void setListenAddress(t_address *address);
 #ifdef UNIT_TESTING
 	#pragma pack(pop)
 #endif
+
 #endif /* RF_PARSER_H_ */

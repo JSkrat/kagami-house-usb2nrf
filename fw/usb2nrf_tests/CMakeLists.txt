@@ -14,21 +14,23 @@ add_definitions(-D"UNIT_TESTING=1")
 set(
     HEADERS
     ../usb2nrf/defines.h
-    ../usb2nrf/protocol.h
-    ../usb2nrf/functions.h
-    "RF Parser.h"
-    "../usb2nrf/RF statistics.h"
+    "../usb2nrf/RF protocol.h"
+    "../usb2nrf/RF functions.h"
+    #"RF Parser.h"
+    "../usb2nrf/RF model.h"
+    "../usb2nrf/RF info.h"
     #../usb2nrf/messages.h
 )
 
 add_executable(
     usb2nrf_tests
     ${HEADERS}
-    "RF Parser.c"
     pgmspace.c
-    ../usb2nrf/functions.c
-    ../usb2nrf/protocol.c
-    "../usb2nrf/RF statistics.c"
+    #"RF Parser.c"
+    "../usb2nrf/RF functions.c"
+    "../usb2nrf/RF protocol.c"
+    "../usb2nrf/RF model.c"
+    "../usb2nrf/RF info.c"
     units_structure.cpp
     test_protocol.cpp
     test_functions.cpp

@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 extern "C" {
     #include "pgmspace.h"
-    #include "../usb2nrf/functions.h"
-    #include "../usb2nrf/protocol.h"
+    #include "../usb2nrf/RF functions.h"
+    #include "../usb2nrf/RF protocol.h"
     #include "../usb2nrf/defines.h"
-    #include "../usb2nrf/RF statistics.h"
+    //#include "../usb2nrf/RF statistics.h"
 }
 #include "units_structure.h"
 #include <string.h>

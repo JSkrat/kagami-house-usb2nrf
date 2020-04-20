@@ -7,13 +7,14 @@
 
 #include "../usb2nrf/RF functions.h"
 #include "../usb2nrf/RF protocol.h"
+#include "../usb2nrf/RF info.h"
 #ifndef UNIT_TESTING
     #include "./units_structure.h"
     #include "./RF model.h"
     #include <avr/pgmspace.h>
 #else
     #include "../usb2nrf_tests/units_structure.h"
-    #include "../usb2nrf_tests/RF model.h"
+    #include "../usb2nrf/RF model.h"
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include "../usb2nrf/RF protocol internal.h"
@@ -21,7 +22,7 @@
 #include <stdint.h>
 // for memcpy
 #include <string.h>
-#include "string.h"
+#include "sstring.h"
 // if it is unit tests, it should be local file, not of main project one
 
 const uint8_t _dataTypeLength[] = {
@@ -33,6 +34,9 @@ const uint8_t _dataTypeLength[] = {
 
 uint8_t setSessionKey(const uint8_t unit, const scString *request, sString *response) {
 	// TODO after integrating cipher library
+    (void) unit;
+    (void) request;
+    (void) response;
 	return ercNotImplemented;
 }
 
@@ -43,10 +47,10 @@ uint8_t getListOfUnits(const uint8_t unit, const scString *request, sString *res
 	//response->data[0] = UNITS_LENGTH;
 	for (int i = 0; i < UNITS_LENGTH; i++) {
 		uint8_t base = 0 + 4*i;
-        response->data[base+0] = pgm_read_byte(&(units[i].type));
-        response->data[base+1] = pgm_read_byte(&(units[i].channelsROLength));
-        response->data[base+2] = pgm_read_byte(&(units[i].channelsWOLength));
-        response->data[base+3] = pgm_read_byte(&(units[i].channelsRWLength));
+        response->data[base+0] = pgm_read_byte((const uint8_t*) &(units[i].type));
+        response->data[base+1] = pgm_read_byte((const uint8_t*) &(units[i].channelsROLength));
+        response->data[base+2] = pgm_read_byte((const uint8_t*) &(units[i].channelsWOLength));
+        response->data[base+3] = pgm_read_byte((const uint8_t*) &(units[i].channelsRWLength));
 	}
 	return ercOk;
 }
@@ -95,7 +99,7 @@ uint8_t getStatistics(const uint8_t unit, const scString *request, sString *resp
 uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString *response) {
     (void) request;
 	response->length = 13;
-    response->data[0] = pgm_read_byte(&(units[unit].type));
+    response->data[0] = pgm_read_byte((const uint8_t*) &(units[unit].type));
     const uint8_t ro_num = pgm_read_byte(&(units[unit].channelsROLength));
     const uint8_t wo_num = pgm_read_byte(&(units[unit].channelsWOLength));
     const uint8_t rw_num = pgm_read_byte(&(units[unit].channelsRWLength));
@@ -112,11 +116,11 @@ uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString
 			wo <<= 2;
 			rw <<= 2;
             if (ro_num > index)
-                ro |= pgm_read_byte(&(ro_ch[index].dataType));
+                ro |= pgm_read_byte((const uint8_t*) &(ro_ch[index].dataType));
             if (wo_num > index)
-                wo |= pgm_read_byte(&(wo_ch[index].dataType));
+                wo |= pgm_read_byte((const uint8_t*) &(wo_ch[index].dataType));
             if (rw_num > index)
-                rw |= pgm_read_byte(&(rw_ch[index].dataType));
+                rw |= pgm_read_byte((const uint8_t*) &(rw_ch[index].dataType));
 		}
 		response->data[1 + i + 4*0] = ro;
 		response->data[1 + i + 4*1] = wo;
@@ -164,7 +168,7 @@ uint8_t _readWriteSingleUnitChannel(const uint8_t unit, const uint8_t request, u
     if (length <= channelNum) {
 		return ercChBadChannels;
 	}
-    const eChannelDataType channelDT = pgm_read_byte(&(channels[channelNum].dataType));
+    const eChannelDataType channelDT = pgm_read_byte((const uint8_t*) &(channels[channelNum].dataType));
     void *value = pgm_read_ptr(&(channels[channelNum].value));
 	
 	if (channelDTReq != channelDT) {
