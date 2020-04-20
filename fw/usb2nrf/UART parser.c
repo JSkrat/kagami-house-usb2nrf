@@ -5,6 +5,7 @@
  *  Author: J-sama
  */ 
 #include "UART parser.h"
+#include "UART protocol.h"
 #include "defines.h"
 #include <stdint.h>
 #include "messages.h"
@@ -14,11 +15,11 @@
 #include "../usb2nrf/RF model.h"
 #include "ui.h"
 
-void uSendPacket(union uPackage *packet);
+void uSendPacket(uPackage *packet);
 
 static usState state;
 static uint8_t position = 0;
-static union uPackage reqBuffer;
+static uPackage reqBuffer;
 static bool escActive;
 
 // +1 for make sure begin and end will be equal only at empty buffer
@@ -97,7 +98,7 @@ ISR(USART_UDRE_vect) {
 }
 
 void processPacket() {
-	union uPackage respBuffer;
+	uPackage respBuffer;
 	switch (reqBuffer.pkg.command) {
 		case mcStatus: {
 			respBuffer.pkg.payloadSize = 0x13;
@@ -212,7 +213,7 @@ void processPacket() {
 	uSendPacket(&respBuffer);
 }
 
-void uSendPacket(union uPackage *packet) {
+void uSendPacket(uPackage *packet) {
 	uQueueChar(0xC0);
 	uQueueChar(uPPProtoVer);
 	for (int8_t i = 0; i < packet->pkg.payloadSize + HEADER_SIZE; i++) {

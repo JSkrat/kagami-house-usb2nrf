@@ -111,7 +111,7 @@ uint8_t uTransmit(const scString *request, sString *response) {
 	return eucOk;
 }
 
-const PROGMEM tUARTCommandItem UARTFunctions[] = {
+const PROGMEM tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER] = {
 	{ mcStatus, &uStatus },
 	{ mcAddresses, &uAddresses },
 		

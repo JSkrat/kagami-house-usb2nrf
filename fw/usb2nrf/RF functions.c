@@ -6,7 +6,7 @@
  */ 
 
 #include "../usb2nrf/RF functions.h"
-#include "../usb2nrf/protocol.h"
+#include "../usb2nrf/RF protocol.h"
 #ifndef UNIT_TESTING
     #include "./units_structure.h"
     #include "./RF model.h"
@@ -16,7 +16,7 @@
     #include "../usb2nrf_tests/RF model.h"
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
-#include "../usb2nrf/protocol internal.h"
+#include "../usb2nrf/RF protocol internal.h"
 #include <stdbool.h>
 #include <stdint.h>
 // for memcpy
