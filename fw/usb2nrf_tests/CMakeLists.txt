@@ -20,6 +20,7 @@ set(
     "../usb2nrf/RF model.h"
     "../usb2nrf/RF info.h"
     #../usb2nrf/messages.h
+    uartfunctionstest.h
 )
 
 add_executable(
@@ -34,6 +35,7 @@ add_executable(
     units_structure.cpp
     test_protocol.cpp
     test_functions.cpp
+    uartfunctionstest.cpp
     main.cpp
 )
 include_directories(../../../googletest/googletest/include)
