@@ -16,7 +16,7 @@
 #ifdef UNIT_TESTING
 	#pragma pack(push, 1)
 #endif
-#include "string.h"
+#include "sstring.h"
 
 #define PROTOCOL_VERSION 0
 

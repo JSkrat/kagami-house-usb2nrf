@@ -4,6 +4,8 @@
 #include "../usb2nrf/nrf24l01.h"
 #include "../usb2nrf/nrf24l01-mnemonics.h"
 
+nRF24L01 *rfTransiever;
+
 extern uint8_t *__start_progmem;
 extern uint8_t *__stop_progmem;
 // i have no idea why its size is size of pointer, not size of data
@@ -77,7 +79,3 @@ bool nRF24L01_read_received_data(nRF24L01 *rf, nRF24L01Message *message) {
 void nRF24L01_listen(nRF24L01 *rf, int pipe, uint8_t *address) {
 
 }
-
-//void uSendPacket(union uPackage *packet) {
-
-//}

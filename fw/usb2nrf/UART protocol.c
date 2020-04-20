@@ -7,7 +7,7 @@
 
 #include "UART protocol.h"
 #include "UART functions.h"
-#include "string.h"
+#include "sstring.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include "messages.h"

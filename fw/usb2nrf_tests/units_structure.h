@@ -9,7 +9,7 @@
 #ifndef UNITS_STRUCTURE_H_
 #define UNITS_STRUCTURE_H_
 #include <stdbool.h>
-#include "functions.h"
+#include "RF functions.h"
 #ifdef __cplusplus
     #include <unordered_map>
 #endif

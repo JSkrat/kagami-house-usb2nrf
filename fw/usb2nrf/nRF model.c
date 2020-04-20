@@ -13,10 +13,10 @@
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #include "../usb2nrf/defines.h"
 #include "../usb2nrf/nRF model.h"
+#include "../usb2nrf/RF info.h"
 
 nRF24L01 *rfTransiever;
 fNRFCallback cNRF_DataTransmitted = NULL, cNRF_DataReceived = NULL, cNRF_TransmissionFailed = NULL;
-uint16_t total_requests, ok_responses, error_responses, transaction_errors, ack_timeouts;
 
 void nRF_init() {
 	// nrf24l01

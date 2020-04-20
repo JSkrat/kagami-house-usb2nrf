@@ -176,6 +176,12 @@
     <Compile Include="nrf24l01.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="RF info.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="RF info.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="RF protocol internal.h">
       <SubType>compile</SubType>
     </Compile>
@@ -197,7 +203,7 @@
     <Compile Include="nRF model.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="string.h">
+    <Compile Include="sstring.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="UART functions.c">

@@ -5,7 +5,7 @@
  *  Author: Mintytail
  */
 #include "units_structure.h"
-#include "../usb2nrf/functions.h"
+#include "../usb2nrf/RF functions.h"
 #include <unordered_map>
 #include "pgmspace.h"
 

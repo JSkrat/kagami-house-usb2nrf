@@ -9,7 +9,7 @@
 #ifndef UART_FUNCTIONS_H_
 #define UART_FUNCTIONS_H_
 
-#include "string.h"
+#include "sstring.h"
 #include <avr/pgmspace.h>
 #include <stddef.h>
 
