@@ -24,4 +24,7 @@ extern "C" {
 
 extern nRF24L01 *rfTransiever;
 
+void _delay_us(int delay);
+
+
 #endif // PGMSPACE_H

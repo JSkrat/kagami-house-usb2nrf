@@ -16,26 +16,31 @@ set(
     ../usb2nrf/defines.h
     "../usb2nrf/RF protocol.h"
     "../usb2nrf/RF functions.h"
-    #"RF Parser.h"
     "../usb2nrf/RF model.h"
     "../usb2nrf/RF info.h"
-    #../usb2nrf/messages.h
-    uartfunctionstest.h
+    "../usb2nrf/UART protocol.h"
+    "../usb2nrf/UART functions.h"
+    "../usb2nrf/messages.h"
+    "uartfunctionstest.h"
+    "uartprotocoltest.h"
 )
 
 add_executable(
     usb2nrf_tests
     ${HEADERS}
     pgmspace.c
-    #"RF Parser.c"
     "../usb2nrf/RF functions.c"
     "../usb2nrf/RF protocol.c"
     "../usb2nrf/RF model.c"
     "../usb2nrf/RF info.c"
+    "../usb2nrf/UART protocol.c"
+    "../usb2nrf/UART functions.c"
+    "../usb2nrf/messages.c"
     units_structure.cpp
     test_protocol.cpp
     test_functions.cpp
     uartfunctionstest.cpp
+    uartprotocoltest.cpp
     main.cpp
 )
 include_directories(../../../googletest/googletest/include)

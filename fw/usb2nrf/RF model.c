@@ -11,6 +11,9 @@
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #ifndef UNIT_TESTING
     #include <avr/interrupt.h>
+	#include <util/delay.h>
+#else
+    #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include <stdint.h>
 #include <string.h>
@@ -206,6 +209,7 @@ void RFListen(t_address *address) {
 }
 
 void transmitPacket(tRfPacket *packet) {
+	_delay_us(10);
 	nRF24L01_transmit(rfTransiever, packet->address, &(packet->msg));
 }
 

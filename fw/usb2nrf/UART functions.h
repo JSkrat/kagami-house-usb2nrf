@@ -10,7 +10,11 @@
 #define UART_FUNCTIONS_H_
 
 #include "sstring.h"
-#include <avr/pgmspace.h>
+#ifndef UNIT_TESTING
+    #include <avr/pgmspace.h>
+#else
+    #include "../usb2nrf_tests/pgmspace.h"
+#endif
 #include <stddef.h>
 
 
@@ -18,8 +22,9 @@ typedef uint8_t (*fUARTFunction)(const scString*, sString*);
 
 // modem commands
 typedef enum {
-	mcStatus = 0,
-	mcAddresses = 1,
+	mcEcho = 0,
+	mcStatus = 8,
+	mcAddresses = 9,
 	
 	mcSetChannel = 0x10,
 	mcSetTXPower = 0x11,
@@ -38,9 +43,10 @@ typedef enum {
 	mcReadRFBuffer = 0x50,
 	
 	mcTransmit = 0x7F,
-	
-	mcAckFromRF = 0xCC,
-	mcReceiveFromRF = 0xEE,
+
+    mcResponseFlag = 0x80,
+    // for unit testing, should be the number of absent function
+    mcNoFunction = 0x70,
 } eModemCommand;
 
 
@@ -50,7 +56,7 @@ typedef struct {
 } tUARTCommandItem;
 
 
-#define UART_FUNCTIONS_NUMBER 14
+#define UART_FUNCTIONS_NUMBER 15
 extern const tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER];
 
 #endif /* UART_FUNCTIONS_H_ */

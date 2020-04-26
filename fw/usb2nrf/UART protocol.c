@@ -30,9 +30,16 @@ static uint8_t position = 0;
 static uPackage reqBuffer;
 
 
+void UARTGenerateErrorResponse(const eUARTResponseCodes code, uPackage *response) {
+    response->pkg.protocolVersion = uPPProtoVer;
+    response->pkg.command = mcNoFunction | mcResponseFlag;
+    response->pkg.payloadSize = 1;
+    response->pkg.payload[0] = code;
+}
+
 void UARTGenerateResponse(const uPackage *request, uPackage *response) {
 	response->pkg.protocolVersion = uPPProtoVer;
-	response->pkg.command = request->pkg.command | 0x80;
+    response->pkg.command = request->pkg.command | mcResponseFlag;
 	response->pkg.payloadSize = 1;
 	if (uPPProtoVer != request->pkg.protocolVersion) {
 		response->pkg.payload[0] = eucBadVersion;
@@ -40,9 +47,9 @@ void UARTGenerateResponse(const uPackage *request, uPackage *response) {
 	}
 	// search for the requested command
 	for (uint8_t i = 0; i < UART_FUNCTIONS_NUMBER; i++) {
-		eModemCommand commandToCheck = pgm_read_byte(UARTFunctions[i].command);
+        eModemCommand commandToCheck = pgm_read_byte((const uint8_t*) &(UARTFunctions[i].command));
 		if (request->pkg.command == commandToCheck) {
-			fUARTFunction f = pgm_read_ptr(UARTFunctions[i].function);
+            fUARTFunction f = (fUARTFunction) pgm_read_ptr(&(UARTFunctions[i].function));
 			if (NULL == f) {
 				// generate response "not implemented"
 				response->pkg.payload[0] = eucNotImplemented;
@@ -66,18 +73,22 @@ void UARTBeginTransaction() {
 
 bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 	switch (state) {
-		case usEnd:
+        case usEnd: {
+            break;
+        }
 		case usError: {
 			//ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
-			break;
+            break;
 		}
 		case usProtoVer: {
 			if (uPPProtoVer == b) {
 				state = usCommand;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usCommand, true);
-				} else {
+            } else {
 				state = usError;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorProto, true);
+                UARTGenerateErrorResponse(eucBadVersion, response);
+                return true;
 			}
 			break;
 		}
@@ -85,9 +96,11 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 			if (0x80 & b) {
 				state = usError;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorCmd, true);
-				} else {
+                UARTGenerateErrorResponse(eucBadCommand, response);
+                return true;
+            } else {
 				reqBuffer.pkg.command = b;
-				state = usPDataLength;
+                state = usPDataLength;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usPDataLength, true);
 			}
 			break;
@@ -96,7 +109,8 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 			if (PAYLOAD_SIZE + MAC_SIZE <= b) {
 				state = usError;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorLength, true);
-				break;
+                UARTGenerateErrorResponse(eucMemoryError, response);
+                return true;
 			}
 			reqBuffer.pkg.payloadSize = b;
 			position = 0;
@@ -116,7 +130,7 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 			reqBuffer.pkg.payload[position++] = b;
 			if (reqBuffer.pkg.payloadSize <= position) {
 				// that's all payload, no bytes from that package left
-				state = usError;
+                state = usEnd;
 				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usEnd, true);
 				UARTGenerateResponse(&reqBuffer, response);
 				return true;
