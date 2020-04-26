@@ -7,8 +7,9 @@
 
 
 enum eModemCommand {
-    mcStatus = 0,
-    mcAddresses = 1,
+    mcEcho = 0,
+    mcStatus = 8,
+    mcAddresses = 9,
 
     mcSetChannel = 0x10,
     mcSetTXPower = 0x11,
@@ -24,10 +25,10 @@ enum eModemCommand {
     mcSetMode = 0x40,
     mcSetListenAddress = 0x41,
 
+    mcReadRFBuffer = 0x50,
+
     mcTransmit = 0x7F,
 
-    mcAckFromRF = 0x4C,
-    mcReceiveFromRF = 0x6E,
 };
 
 const QHash<enum eModemCommand, QString> responseEtcText = {
@@ -266,14 +267,6 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
                         .arg(static_cast<uint8_t>(response[0x0A + i]), 2, 16)
                         );
         }
-        break;
-    }
-    case mcAckFromRF: {
-        this->addACKMessage(response.mid(0, 5), response.mid(5));
-        break;
-    }
-    case mcReceiveFromRF: {
-        this->addReceiveMessage(response.mid(0, 5), response.mid(5));
         break;
     }
     case mcTransmit: {
