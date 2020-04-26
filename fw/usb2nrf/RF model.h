@@ -53,6 +53,7 @@ void transmitPacket(tRfPacket *packet);
 void RFListen(t_address *address);
 eRFMode switchRFMode(eRFMode newMode);
 void setListenAddress(t_address *address);
+tRfPacket* nextRFBufferElement();
 
 #ifdef UNIT_TESTING
 	#pragma pack(pop)

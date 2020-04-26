@@ -97,8 +97,29 @@ uint8_t uSetListenAddress(const scString *request, sString *response) {
 	return eucOk;
 }
 
+uint8_t readRFBuffer(const scString *request, sString *response) {
+	// we're in the interrupt handler, so no interrupts until we finish
+	// so, pointer to the packet is valid until then :)
+	tRfPacket *data = nextRFBufferElement();
+	if (NULL == data) {
+		return eucNoPackets;
+	} else {
+		response->length = data->msg.length + MAC_SIZE;
+		memcpy(&response->data[0], data->address, MAC_SIZE);
+		if (data->msg.length)
+			memcpy(&response->data[MAC_SIZE], data->msg.data, data->msg.length);
+		switch (data->type) {
+			case eptData: return eucDataPacket;
+			case eptResponseTimeout: return eucSlaveResponseTimeout;
+			case eptAckOk: return eucAckPacket;
+			case eptAckTimeout: return eucAckTimeout;
+			default: return eucGeneralFail;
+		}
+	}
+}
+
 uint8_t uTransmit(const scString *request, sString *response) {
-	response->length = 1;
+	//response->length = 1;
 	if (MAC_SIZE > request->length) {
 		return eucArgumentValidationError;
 	}
@@ -131,7 +152,7 @@ const PROGMEM tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER] = {
 	{ mcSetMode, &uSetMode },
 	{ mcSetListenAddress, &uSetListenAddress },
 	
-	{ mcReadRFBuffer, NULL },
+    { mcReadRFBuffer, &readRFBuffer },
 	
 	{ mcTransmit, &uTransmit },
 
