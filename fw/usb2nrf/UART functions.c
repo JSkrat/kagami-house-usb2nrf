@@ -12,8 +12,11 @@
 #include "../usb2nrf/nRF model.h"
 #include "../usb2nrf/RF model.h"
 #include <string.h>
-#include <util/delay.h>
-#include <avr/pgmspace.h>
+#ifndef UNIT_TESTING
+    #include <avr/pgmspace.h>
+#else
+    #include "../usb2nrf_tests/pgmspace.h"
+#endif
 
 uint8_t uStatus(const scString *request, sString *response) {
 	response->length = 0x13;
@@ -100,7 +103,6 @@ uint8_t uTransmit(const scString *request, sString *response) {
 		return eucArgumentValidationError;
 	}
 	//checkTransieverRXBuf();
-	_delay_us(10);
 	tRfPacket packet;
 	memcpy(packet.address, request->data, MAC_SIZE);
 	packet.msg.length = request->length - MAC_SIZE;
@@ -132,4 +134,6 @@ const PROGMEM tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER] = {
 	{ mcReadRFBuffer, NULL },
 	
 	{ mcTransmit, &uTransmit },
+
+    { mcEcho, NULL },
 };

@@ -66,6 +66,8 @@ h_output.write('''
 
 #ifndef UNIT_TESTING
     #include <avr/pgmspace.h>
+#else
+	#include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include <stdint.h>
 
@@ -78,7 +80,7 @@ typedef struct {
 #define cCheck   94
 #define cCelsius 96
 
-#ifndef UNIT_TESTING
+//#ifndef UNIT_TESTING
 ''')
 
 c_output.write('#include "messages.h"\n\n')
@@ -87,14 +89,14 @@ for line in open(argv[1], 'r'):
   key_value = line.strip("\n").split('=')
   if len(key_value) == 2:
     length, value = convert(key_value[1].strip(' '))
-    h_output.write('extern const string m_{name} PROGMEM;\n'.format(name=key_value[0].strip(' ')))
+    h_output.write('extern const string m_{name};\n'.format(name=key_value[0].strip(' ')))
     c_output.write('const string m_{name} PROGMEM = {{ {length}, {{ {data} }} }};\n'.format(
 			name=key_value[0].strip(' '),
 			length=str(length),
 			data=value,
 		))
 
-h_output.write('\n#endif');
+h_output.write('\n//#endif');
 h_output.write('\n#endif // ' + filename + '_H_INCLUDED\n');
 h_output.close()
 c_output.close()
