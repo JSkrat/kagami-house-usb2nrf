@@ -15,6 +15,11 @@
 
 typedef enum {
 	eucOk = 0,
+	eucNoPackets = 0x10,
+	eucSlaveResponseTimeout = 0x11,
+	eucAckTimeout = 0x12,
+	eucDataPacket = 0x14,
+	eucAckPacket = 0x15,
 	eucGeneralFail = 0x80,
 	eucBadVersion = 0x90,
 	eucBadCommand = 0x91,
