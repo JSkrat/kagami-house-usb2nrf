@@ -90,7 +90,6 @@ void uSendPacket(uPackage *packet) {
 	uQueueChar(0xC0);
 	for (int8_t i = 0; i < packet->pkg.payloadSize + HEADER_SIZE; i++) {
 		char c = packet->packageBuffer[i];
-		if (0 == i) c |= 0x80;
 		if (0xC0 == c) {
 			uQueueChar(0xDB);
 			c = 0xDC;
