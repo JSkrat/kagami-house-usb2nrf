@@ -31,6 +31,22 @@ enum eModemCommand {
 
 };
 
+enum eUARTResponseCodes {
+    eucOk = 0,
+    eucNoPackets = 0x10,
+    eucSlaveResponseTimeout = 0x11,
+    eucAckTimeout = 0x12,
+    eucDataPacket = 0x14,
+    eucAckPacket = 0x15,
+
+    eucGeneralFail = 0x80,
+    eucBadVersion = 0x90,
+    eucBadCommand = 0x91,
+    eucMemoryError = 0x92,
+    eucArgumentValidationError = 0x93,
+    eucNotImplemented = 0x94,
+};
+
 const QHash<enum eModemCommand, QString> responseEtcText = {
     {mcListen, "listening"},
     {mcSetMode, "requested mode set (if 0)"},
@@ -104,12 +120,20 @@ void MainWindow::addSendMessage(QByteArray from, QByteArray message) {
     this->addMessage(from, "Send to", message, QColor::fromRgbF(1, 0.9, 0.9));
 }
 
-void MainWindow::addACKMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 1, 0.9));
+void MainWindow::addACKMessage(QByteArray from, QByteArray message, bool timeout) {
+    if (! timeout) {
+        this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 1, 0.9));
+    } else {
+        this->addMessage(from, "ACK timeout from", message, QColor::fromRgbF(1, 0.9, 0.8));
+    }
 }
 
-void MainWindow::addReceiveMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
+void MainWindow::addReceiveMessage(QByteArray from, QByteArray message, bool timeout) {
+    if (! timeout) {
+        this->addMessage(from, "Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
+    } else {
+        this->addMessage(from, "Response timeout from", message, QColor::fromRgbF(0.9, 1, 0.8));
+    }
 }
 
 void MainWindow::addEtcMessage(QByteArray from, QString message) {
@@ -119,12 +143,13 @@ void MainWindow::addEtcMessage(QByteArray from, QString message) {
 void MainWindow::statusUpgrade()
 {
     /// request modem status upgrade
-    this->serialTransaction(QByteArray(1, '\x00'));
+    this->serialTransaction(QByteArray(1, mcStatus));
 }
 
 void MainWindow::serialResponse(const uint8_t command, const QByteArray &response)
 {
     enum eModemCommand eCommand = static_cast<enum eModemCommand>(command);
+
     switch (eCommand) {
     case mcStatus: {
         // modem status
@@ -247,7 +272,7 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         ////////////////////////////////////////////////////////////////
         /// trigger second request with addresses //////////////////////
         ////////////////////////////////////////////////////////////////
-        this->serialTransaction(QByteArray(1, '\x01'));
+        this->serialTransaction(QByteArray(1, mcAddresses));
         break;
     }
     case mcAddresses: {
@@ -266,6 +291,31 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
                         .arg(QString(response.mid(0x05, 4).toHex(':')))
                         .arg(static_cast<uint8_t>(response[0x0A + i]), 2, 16)
                         );
+        }
+        this->serialTransaction(QByteArray(1, mcReadRFBuffer));
+        break;
+    }
+    case mcReadRFBuffer: {
+        switch (response.at(0)) {
+        case eucNoPackets: {
+            break;
+        }
+        case eucAckPacket: {
+            this->addACKMessage(response.mid(1, 5), response.mid(7), false);
+            break;
+        }
+        case eucAckTimeout: {
+            this->addACKMessage(response.mid(1, 5), response.mid(7), true);
+            break;
+        }
+        case eucDataPacket: {
+            this->addReceiveMessage(response.mid(1, 5), response.mid(7), false);
+            break;
+        }
+        case eucSlaveResponseTimeout: {
+            this->addReceiveMessage(response.mid(1, 5), response.mid(7), true);
+            break;
+        }
         }
         break;
     }
