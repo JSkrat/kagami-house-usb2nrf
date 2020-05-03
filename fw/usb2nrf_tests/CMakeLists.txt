@@ -23,12 +23,14 @@ set(
     "../usb2nrf/messages.h"
     "uartfunctionstest.h"
     "uartprotocoltest.h"
+    "RF model test.h"
 )
 
 add_executable(
     usb2nrf_tests
     ${HEADERS}
     pgmspace.c
+    "nRF model.c"
     "../usb2nrf/RF functions.c"
     "../usb2nrf/RF protocol.c"
     "../usb2nrf/RF model.c"
@@ -41,6 +43,7 @@ add_executable(
     test_functions.cpp
     uartfunctionstest.cpp
     uartprotocoltest.cpp
+    "RF model test.cpp"
     main.cpp
 )
 include_directories(../../../googletest/googletest/include)

@@ -46,12 +46,12 @@ ISR(TIMER0_COMPA_vect) {
 #endif
 
 void rf_init() {
-#ifndef UNIT_TESTING
 	// setup nrf interface
 	nRF_init();
 	cNRF_DataReceived = &dataReceived;
 	cNRF_DataTransmitted = &dataTransmitted;
 	cNRF_TransmissionFailed = &transmissionFailed;
+#ifndef UNIT_TESTING
 	// now let's setup timer
 	TCCR0A = (1 << WGM01) | (0 << WGM00); // CTC mode
 	TCCR0B = (0 << CS02) | (1 << CS01) | (1 << CS00) | (0 << WGM02); // clk_io/64
@@ -59,7 +59,10 @@ void rf_init() {
 	TIMSK0 = (1 << OCIE0A);
 #endif
 	RFMode = rmIdle;
+	responseTimeout = -1;
 	protocolInit();
+	// reset buffer
+	rfbBegin = 0; rfbEnd = 0; rfbSize = 0;
 	// if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 	//nListen();
 	total_requests = 0;
@@ -83,7 +86,7 @@ tRfPacket* nextRFBufferFreeElement() {
 }
 
 tRfPacket* nextRFBufferElement() {
-	if (! rfbSize) return NULL;
+	if (0 >= rfbSize) return NULL;
 	rfbSize--;
 	tRfPacket *ret = &(RFBuffer[rfbBegin++]);
 	if (RFBUFFER_SIZE <= rfbBegin) rfbBegin = 0;
@@ -151,7 +154,7 @@ void dataTransmitted(void) {
 		default:
 		case rmMaster: {
 			// and here we're waiting for the response, but not forever
-			responseTimeout = 20;
+			responseTimeout = SLAVE_RESPONSE_TIMEOUT_MS;
 			RFListen(&ListenAddress);
 			// no break
 		}
