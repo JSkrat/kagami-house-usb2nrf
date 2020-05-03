@@ -11,7 +11,10 @@
 
 #include <stdint.h>
 
-#pragma pack(1)
+#ifdef UNIT_TESTING
+	#pragma pack(1)
+#endif
+	
 typedef struct {
 	uint8_t length;
 	uint8_t *data;
@@ -21,6 +24,8 @@ typedef struct {
 	const uint8_t length;
 	const uint8_t *data;
 } scString;
-#pragma pack()
+#ifdef UNIT_TESTING
+	#pragma pack()
+#endif
 
 #endif /* STRING_H_ */
