@@ -66,7 +66,7 @@ void rf_init() {
 	total_requests = 0;
 	ok_responses = 0;
 	error_responses = 0;
-	transaction_errors = 0;
+    missed_packets = 0;
 	ack_timeouts = 0;
 }
 
@@ -94,7 +94,10 @@ tRfPacket* nextRFBufferElement() {
 void dataReceived(sString *address, sString *payload) {
 	// event, one per received packet
 	tRfPacket *request = nextRFBufferFreeElement();
-	/// @TODO check if request is NULL
+    if (NULL == request) {
+        missed_packets++;
+        return;
+    }
 	request->type = eptData;
 	memcpy(request->address, address->data, address->length);
 	request->payloadLength = payload->length;
@@ -124,7 +127,10 @@ void dataTransmitted(sString *address, sString *payload) {
 	(void) payload; // *payload will contain ACK payload when we will support it
 	// ack received, tx successful
 	tRfPacket *request = nextRFBufferFreeElement();
-	/// @TODO check result for NULL
+    if (NULL == request) {
+        missed_packets++;
+        return;
+    }
 	//rfPacketsSent++;
 	/*if (0x80 > lastSentPacketStatus) {
 		ok_responses++;
@@ -132,7 +138,7 @@ void dataTransmitted(sString *address, sString *payload) {
 		error_responses++;
 	}*/
 	request->type = eptAckOk;
-	memcpy(&(request->address), address, MAC_SIZE);
+    memcpy(&(request->address), address->data, MAC_SIZE);
 	switch (RFMode) {
 		default:
 		case rmMaster: {
@@ -158,13 +164,17 @@ void transmissionFailed(sString *address, sString *payload) {
 	(void) payload;
 	// no ack received n times
 	tRfPacket *request = nextRFBufferFreeElement();
+    if (NULL == request) {
+        missed_packets++;
+        return;
+    }
 	request->type = eptAckTimeout;
 	ack_timeouts++;
 	switch (RFMode) {
 		default:
 		case rmIdle:
 		case rmMaster: {
-			memcpy(&(request->address), address, MAC_SIZE);
+            memcpy(&(request->address), address->data, MAC_SIZE);
 			break;
 		}
 		case rmSlave: {
@@ -179,6 +189,10 @@ void transmissionFailed(sString *address, sString *payload) {
 void responseTimeoutEvent() {
 	// no response from the requested slave
 	tRfPacket *packet = nextRFBufferFreeElement();
+    if (NULL == packet) {
+        missed_packets++;
+        return;
+    }
 	packet->type = eptResponseTimeout;
 	memcpy(&(packet->address), ListenAddress, MAC_SIZE);
 }

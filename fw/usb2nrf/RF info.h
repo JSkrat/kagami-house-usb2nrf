@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 extern uint16_t total_requests;
-extern uint16_t ok_responses, error_responses, transaction_errors, ack_timeouts;
+extern uint16_t ok_responses, error_responses, missed_packets, ack_timeouts;
 
 
 #endif /* RF_INFO_H_ */

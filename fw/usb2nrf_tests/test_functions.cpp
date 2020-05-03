@@ -110,7 +110,7 @@ TEST_F(FunctionsTest, TestGetStatistics) {
     total_requests = 0xFEDC;
     ok_responses = 0xEDCB;
     error_responses = 0xCDBA;
-    transaction_errors = 0xBCA9;
+    missed_packets = 0xBCA9;
     ack_timeouts = 0xAB98;
     ASSERT_EQ(ercOk, (*(this->getFunction(eFGetStatistics)))(0, nullptr, &this->response));
 #pragma pack()
@@ -126,7 +126,7 @@ TEST_F(FunctionsTest, TestGetStatistics) {
     EXPECT_EQ(total_requests, *reinterpret_cast<uint16_t*>(this->response.data));
     EXPECT_EQ(ok_responses, *reinterpret_cast<uint16_t*>(this->response.data+2));
     EXPECT_EQ(error_responses, *reinterpret_cast<uint16_t*>(this->response.data+4));
-    EXPECT_EQ(transaction_errors, *reinterpret_cast<uint16_t*>(this->response.data+6));
+    EXPECT_EQ(missed_packets, *reinterpret_cast<uint16_t*>(this->response.data+6));
     EXPECT_EQ(ack_timeouts, *reinterpret_cast<uint16_t*>(this->response.data+8));
 }
 

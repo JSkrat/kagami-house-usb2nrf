@@ -8,4 +8,4 @@
 #include <stdint.h>
 
 
-uint16_t total_requests = 0, ok_responses = 0, error_responses = 0, transaction_errors = 0, ack_timeouts = 0;
+uint16_t total_requests = 0, ok_responses = 0, error_responses = 0, missed_packets = 0, ack_timeouts = 0;
