@@ -6,8 +6,10 @@
  */ 
 
 #include <stdint.h>
+#include <string.h>
 #ifndef UNIT_TESTING
 	#include <avr/interrupt.h>
+	#include <util/delay.h>
 #endif
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
@@ -45,17 +47,22 @@ ISR(PCINT0_vect) {
 	// The IRQ pin is activated when TX_DS IRQ, RX_DR IRQ or MAX_RT IRQ are set high
 	// by the state machine in the STATUS register
 	nRF24L01_update_status(rfTransiever);
+	uint8_t addressBytes[MAC_SIZE];
+	sString address = {MAC_SIZE, &addressBytes[0]};
 	if (rfTransiever->status & _BV(TX_DS)) {
 		// Data Sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated,
 		// this bit is set high only when ACK is received.
-		if (cNRF_DataTransmitted) (*cNRF_DataTransmitted)();
+		nRF24L01_read_register(rfTransiever, TX_ADDR, address.data, MAC_SIZE);
+		/// @todo there instead of NULL should be ack payload, if there is any
+		if (cNRF_DataTransmitted) (*cNRF_DataTransmitted)(&address, NULL);
 		uint8_t data = _BV(TX_DS);
 		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
 	}
 	if (rfTransiever->status & _BV(MAX_RT)) {
 		// Maximum number of TX retransmits interrupt
 		// If MAX_RT is asserted it must be cleared to enable further communication.
-		if (cNRF_TransmissionFailed) (*cNRF_TransmissionFailed)();
+		nRF24L01_read_register(rfTransiever, TX_ADDR, address.data, MAC_SIZE);
+		if (cNRF_TransmissionFailed) (*cNRF_TransmissionFailed)(&address, NULL);
 		uint8_t data = _BV(MAX_RT);
 		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
 	}
@@ -67,12 +74,48 @@ ISR(PCINT0_vect) {
 		// 2) clear RX_DR IRQ,
 		// 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO,
 		// 4) if there are more data in RX FIFO, repeat from step 1).
+		sString payload;
+		nRF24L01Message msg;
 		do {
-			if (cNRF_DataReceived) (cNRF_DataReceived)();
+			nRF24L01_read_received_data(rfTransiever, &msg);
+			payload.length = msg.length;
+			memcpy(payload.data, &(msg.data), msg.length);
+			// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
+			nRF24L01_read_register(rfTransiever, RX_ADDR_P1, address.data, MAC_SIZE);
+			switch (msg.pipe_number) {
+				case 0: {
+					nRF24L01_read_register(rfTransiever, RX_ADDR_P0, address.data, MAC_SIZE);
+					break;
+				}
+				// pipe 1 address is already pre-filled, so do nothing
+				case 1: break;
+				// overwrite last byte of address
+				case 2:
+				case 3:
+				case 4:
+				case 5: {
+					nRF24L01_read_register(rfTransiever, RX_ADDR_P2 - 2 + msg.pipe_number, &(address.data[MAC_SIZE-1]), 1);
+					break;
+				}
+			}
+			if (cNRF_DataReceived) (cNRF_DataReceived)(&address, &payload);
 			uint8_t data = _BV(RX_DR);
 			nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
 		} while (nRF24L01_data_received(rfTransiever));
 	}
 
 	//checkTransieverRXBuf(/*true*/);
+}
+
+void nRF_listen(const uint8_t *address) {
+	nRF24L01_listen(rfTransiever, 0, (uint8_t *)address);
+}
+
+void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
+	_delay_us(10);
+	// @todo optimize the library to avoid unnecessary copying here
+	nRF24L01Message msg;
+	msg.length = length;
+	memcpy(&(msg.data), data, length);
+	nRF24L01_transmit(rfTransiever, address, &msg);
 }

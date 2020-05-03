@@ -7,23 +7,21 @@
 #include "../usb2nrf/RF model.h"
 #include "../usb2nrf/nRF model.h"
 #include "../usb2nrf/RF info.h"
-#include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
-#include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #ifndef UNIT_TESTING
     #include <avr/interrupt.h>
-	#include <util/delay.h>
 #else
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include <stdint.h>
 #include <string.h>
 #include "../usb2nrf/RF protocol.h"
+#include "sstring.h"
 
 void checkTransieverRXBuf(void);
 void parseRFPacket(tRfPacket *pkg);
-void dataTransmitted(void);
-void dataReceived(void);
-void transmissionFailed(void);
+void dataTransmitted(sString *address, sString *payload);
+void dataReceived(sString *address, sString *payload);
+void transmissionFailed(sString *address, sString *payload);
 void responseTimeoutEvent(void);
 void msEvent(void);
 
@@ -93,30 +91,14 @@ tRfPacket* nextRFBufferElement() {
 	return ret;
 }
 
-void dataReceived(void) {
+void dataReceived(sString *address, sString *payload) {
 	// event, one per received packet
 	tRfPacket *request = nextRFBufferFreeElement();
 	/// @TODO check if request is NULL
 	request->type = eptData;
-	nRF24L01_read_received_data(rfTransiever, &(request->msg));
-	// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
-	nRF24L01_read_register(rfTransiever, RX_ADDR_P1, &(request->address), MAC_SIZE);
-	switch (request->msg.pipe_number) {
-		case 0: {
-			nRF24L01_read_register(rfTransiever, RX_ADDR_P0, &(request->address), MAC_SIZE);
-			break;
-		}
-		// pipe 1 address is already pre-filled, so do nothing
-		case 1: break;
-		// overwrite last byte of address
-		case 2:
-		case 3:
-		case 4:
-		case 5: {
-			nRF24L01_read_register(rfTransiever, RX_ADDR_P2 - 2 + request->msg.pipe_number, &(request->address[MAC_SIZE-1]), 1);
-			break;
-		}
-	}
+	memcpy(request->address, address->data, address->length);
+	request->payloadLength = payload->length;
+	memcpy(&(request->payloadData), payload->data, payload->length);
 	total_requests++;
 	switch (RFMode) {
 		default:
@@ -138,7 +120,8 @@ void dataReceived(void) {
 	}
 }
 
-void dataTransmitted(void) {
+void dataTransmitted(sString *address, sString *payload) {
+	(void) payload; // *payload will contain ACK payload when we will support it
 	// ack received, tx successful
 	tRfPacket *request = nextRFBufferFreeElement();
 	/// @TODO check result for NULL
@@ -149,13 +132,13 @@ void dataTransmitted(void) {
 		error_responses++;
 	}*/
 	request->type = eptAckOk;
-	nRF24L01_read_register(rfTransiever, TX_ADDR, &(request->address), MAC_SIZE);
+	memcpy(&(request->address), address, MAC_SIZE);
 	switch (RFMode) {
 		default:
 		case rmMaster: {
 			// and here we're waiting for the response, but not forever
 			responseTimeout = SLAVE_RESPONSE_TIMEOUT_MS;
-			RFListen(&ListenAddress);
+			RFListen((uint8_t*)&ListenAddress);
 			// no break
 		}
 		case rmIdle: {
@@ -163,7 +146,7 @@ void dataTransmitted(void) {
 		}
 		case rmSlave: {
 			// ack can be only for our response, so we know here transaction is done, we're back in listen state
-			RFListen(&ListenAddress);
+			RFListen((uint8_t*)&ListenAddress);
 			// pop out pushed to rf buffer packet, no one is gonna read it
 			nextRFBufferElement();
 			break;
@@ -171,7 +154,8 @@ void dataTransmitted(void) {
 	}
 }
 
-void transmissionFailed(void) {
+void transmissionFailed(sString *address, sString *payload) {
+	(void) payload;
 	// no ack received n times
 	tRfPacket *request = nextRFBufferFreeElement();
 	request->type = eptAckTimeout;
@@ -180,12 +164,12 @@ void transmissionFailed(void) {
 		default:
 		case rmIdle:
 		case rmMaster: {
-			nRF24L01_read_register(rfTransiever, TX_ADDR, &(request->address), MAC_SIZE);
+			memcpy(&(request->address), address, MAC_SIZE);
 			break;
 		}
 		case rmSlave: {
 			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
-			RFListen(&ListenAddress);
+			RFListen((uint8_t*)&ListenAddress);
 			nextRFBufferElement();
 			break;
 		}
@@ -196,7 +180,7 @@ void responseTimeoutEvent() {
 	// no response from the requested slave
 	tRfPacket *packet = nextRFBufferFreeElement();
 	packet->type = eptResponseTimeout;
-	nRF24L01_read_register(rfTransiever, TX_ADDR, &(packet->address), MAC_SIZE);
+	memcpy(&(packet->address), ListenAddress, MAC_SIZE);
 }
 
 void msEvent() {
@@ -205,15 +189,6 @@ void msEvent() {
 			responseTimeoutEvent();
 		}
 	}
-}
-
-void RFListen(t_address *address) {
-	nRF24L01_listen(rfTransiever, 0, &((*address)[0]));
-}
-
-void transmitPacket(tRfPacket *packet) {
-	_delay_us(10);
-	nRF24L01_transmit(rfTransiever, packet->address, &(packet->msg));
 }
 
 eRFMode switchRFMode(eRFMode newMode) {
@@ -227,7 +202,7 @@ eRFMode switchRFMode(eRFMode newMode) {
 		}
 		case rmSlave: {
 			// start listen here
-			RFListen(&ListenAddress);
+			RFListen((uint8_t*)&ListenAddress);
 			break;
 		}
 		case rmMaster: {
@@ -247,18 +222,23 @@ void setListenAddress(t_address *address) {
 	}
 }
 
+void RFTransmit(tRfPacket *packet) {
+	memcpy(ListenAddress, packet->address, MAC_SIZE);
+	nRF_transmit((uint8_t*)&(packet->address), packet->payloadLength, (uint8_t*)&(packet->payloadData));
+};
+
 /**
  * process received packet as a slave
  */
-void parseRFPacket(tRfPacket *pkg) {
+void parseRFPacket(tRfPacket *request) {
 	tRfPacket response;
 	// copy address
-	memcpy(&response.address, pkg->address, sizeof(t_address));
+	memcpy(&response.address, request->address, sizeof(t_address));
 	// minimum response size if 3 bytes: version, transaction id, response code
 	// data is the last field, so its starting is minimal length of the packet
-	generateResponse(pkg->msg.length, pkg->msg.data, &(response.msg.length), (uint8_t*) &(response.msg.data));
+	generateResponse(request->payloadLength, request->payloadData, &(response.payloadLength), (uint8_t*) &(response.payloadData));
 	//lastSentPacketStatus = response.msg.data[RF_RESP_CODE];
-	transmitPacket(&response);
+	nRF_transmit((uint8_t*)&(response.address), response.payloadLength, &(response.payloadData[0]));
 	// after that we're waiting for either ack from master or ack timeout
 	// next action will be there
 }

@@ -76,7 +76,7 @@ uint8_t uClearTx(const scString *request, sString *response) {
 }
 
 uint8_t uListen(const scString *request, sString *response) {
-	RFListen((t_address *) request->data);
+	RFListen(request->data);
 	return eucOk;
 }
 
@@ -104,10 +104,10 @@ uint8_t readRFBuffer(const scString *request, sString *response) {
 	if (NULL == data) {
 		return eucNoPackets;
 	} else {
-		response->length = data->msg.length + MAC_SIZE;
+		response->length = data->payloadLength + MAC_SIZE;
 		memcpy(&response->data[0], data->address, MAC_SIZE);
-		if (data->msg.length)
-			memcpy(&response->data[MAC_SIZE], data->msg.data, data->msg.length);
+		if (data->payloadLength)
+			memcpy(&response->data[MAC_SIZE], data->payloadData, data->payloadLength);
 		switch (data->type) {
 			case eptData: return eucDataPacket;
 			case eptResponseTimeout: return eucSlaveResponseTimeout;
@@ -126,11 +126,11 @@ uint8_t uTransmit(const scString *request, sString *response) {
 	//checkTransieverRXBuf();
 	tRfPacket packet;
 	memcpy(packet.address, request->data, MAC_SIZE);
-	packet.msg.length = request->length - MAC_SIZE;
-	if (packet.msg.length) {
-		memcpy(packet.msg.data, request->data + MAC_SIZE, packet.msg.length);
+	packet.payloadLength = request->length - MAC_SIZE;
+	if (packet.payloadLength) {
+		memcpy(packet.payloadData, request->data + MAC_SIZE, packet.payloadLength);
 	}
-	transmitPacket(&packet);
+	RFTransmit(&packet);
 	return eucOk;
 }
 

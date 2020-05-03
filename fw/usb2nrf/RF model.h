@@ -17,7 +17,7 @@
 #endif
 
 #include "../usb2nrf/defines.h"
-#include "../usb2nrf/nrf24l01.h"
+#include "sstring.h"
 #ifndef UNIT_TESTING
     #include "nRF model.h"
 #else
@@ -44,16 +44,21 @@ typedef enum {
 	eptResponseTimeout = 3,
 } ePacketType;
 
-// 40 bytes long, no pointers
+// 39 bytes long, no pointers
 typedef struct {
-	t_address address;
-	ePacketType type;
-	nRF24L01Message msg;
+	ePacketType type; // 1
+	t_address address; // 5
+	uint8_t payloadLength; // 1
+	uint8_t payloadData[PAYLOAD_SIZE]; // 32
 } tRfPacket;
 
 void rf_init();
 void transmitPacket(tRfPacket *packet);
-void RFListen(t_address *address);
+void nRF_listen(const uint8_t *address);
+#define RFListen(address) nRF_listen(address)
+void RFTransmit(tRfPacket *packet);
+
+
 eRFMode switchRFMode(eRFMode newMode);
 void setListenAddress(t_address *address);
 tRfPacket* nextRFBufferElement();
