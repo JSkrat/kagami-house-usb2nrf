@@ -39,10 +39,17 @@ bool nRF24L01_data_received(nRF24L01 *rf) {
     return false;
 }
 
+bool messageHaveBeenReceived;
+nRF24L01Message receivedMessage;
 bool nRF24L01_read_received_data(nRF24L01 *rf, nRF24L01Message *message) {
     (void) rf;
-    (void) message;
-    return true;
+    if (! messageHaveBeenReceived) {
+        messageHaveBeenReceived = true;
+        message = &receivedMessage;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 int listenCalls = 0;
@@ -85,4 +92,15 @@ void nRF_init_for_tests()
 //    lastListenAddress.data = malloc(255);
 //    lastListenAddress.length = 255;
     listenCalls = 0;
+}
+
+void nRF_listen(const uint8_t *address) {
+    nRF24L01_listen(rfTransiever, 0, (uint8_t *)address);
+}
+
+void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
+    nRF24L01Message msg;
+    msg.length = length;
+    memcpy(&(msg.data), data, length);
+    nRF24L01_transmit(rfTransiever, address, &msg);
 }

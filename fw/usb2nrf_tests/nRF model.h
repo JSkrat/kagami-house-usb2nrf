@@ -12,16 +12,20 @@
 
 extern nRF24L01 *rfTransiever;
 
-typedef void (*fNRFCallback)(void);
+typedef void (*fNRFCallback)(sString *address, sString *payload);
 extern fNRFCallback cNRF_DataTransmitted, cNRF_DataReceived, cNRF_TransmissionFailed;
 
 void nRF_init_for_tests();
 
 void nRF_init();
 
-
-extern nRF24L01 *rfTransiever;
 extern int listenCalls;
 extern sString lastListenAddress;
+void nRF_listen(const uint8_t *address);
+
+extern nRF24L01Message receivedMessage;
+extern bool messageHaveBeenReceived;
+
+void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data);
 
 #endif /* NRF_MODEL_H_ */

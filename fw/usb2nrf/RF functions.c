@@ -91,7 +91,7 @@ uint8_t getStatistics(const uint8_t unit, const scString *request, sString *resp
 	STORE_16(0, total_requests);
 	STORE_16(2, ok_responses);
 	STORE_16(4, error_responses);
-	STORE_16(6, transaction_errors);
+    STORE_16(6, missed_packets);
 	STORE_16(8, ack_timeouts);
 	return ercOk;
 }
