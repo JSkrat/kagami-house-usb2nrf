@@ -4,8 +4,6 @@
 //#include "sstring.h"
 
 
-nRF24L01 *rfTransiever;
-
 extern uint8_t *__start_progmem;
 extern uint8_t *__stop_progmem;
 // i have no idea why its size is size of pointer, not size of data
