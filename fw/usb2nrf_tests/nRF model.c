@@ -46,16 +46,13 @@ bool nRF24L01_read_received_data(nRF24L01 *rf, nRF24L01Message *message) {
 }
 
 int listenCalls = 0;
-uint8_t llaData[256];
+static uint8_t llaData[256];
 sString lastListenAddress = {255, &llaData[0]};
 void nRF24L01_listen(nRF24L01 *rf, int pipe, uint8_t *address) {
     (void) rf;
     (void) pipe;
     listenCalls++;
     lastListenAddress.length = MAC_SIZE;
-    uint8_t x = *address;
-    x = *(lastListenAddress.data);
-    *(lastListenAddress.data) = x;
     memcpy(lastListenAddress.data, address, MAC_SIZE);
 }
 
@@ -85,12 +82,7 @@ void ui_subsystem_str(ui_subsystems subsystem, const string *message, bool in_fl
 
 void nRF_init_for_tests()
 {
-    lastListenAddress.data = malloc(255);
-    lastListenAddress.length = 255;
+//    lastListenAddress.data = malloc(255);
+//    lastListenAddress.length = 255;
     listenCalls = 0;
-}
-
-void nRF_free_for_tests()
-{
-    free(lastListenAddress.data);
 }

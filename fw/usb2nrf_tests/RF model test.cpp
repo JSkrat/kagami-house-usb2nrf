@@ -16,16 +16,13 @@ namespace {
 RFModelTest::RFModelTest()
 {
 //    reinitialize_memory();
-//    nRF_init_for_tests();
-//    lastListenAddress.data = new uint8_t[MAC_SIZE];
-//    *(lastListenAddress.data) = 0xCE;
+    nRF_init_for_tests();
     rf_init();
 }
 
 RFModelTest::~RFModelTest()
 {
-//    nRF_free_for_tests();
-//    delete[] lastListenAddress.data;
+
 }
 
 TEST_F(RFModelTest, listen_test) {
@@ -36,8 +33,7 @@ TEST_F(RFModelTest, listen_test) {
     ASSERT_EQ(1, listenCalls) << "there should've been one call to nrf listen command in RFListen function";
     ASSERT_EQ(MAC_SIZE, lastListenAddress.length);
     for (int i = 0; i < MAC_SIZE; i++) {
-        uint8_t *naddr = lastListenAddress.data;
-        ASSERT_EQ(a[i], *naddr)
+        ASSERT_EQ(a[i], *(lastListenAddress.data+i))
             << "listen address in command to nrf does not match given to RFListen function";
     }
 }

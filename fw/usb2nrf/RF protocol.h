@@ -13,10 +13,10 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#ifdef UNIT_TESTING
-	#pragma pack(push, 1)
-#endif
 #include "sstring.h"
+#ifdef UNIT_TESTING
+    #pragma pack(1)
+#endif
 
 #define PROTOCOL_VERSION 0
 
@@ -111,6 +111,6 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 void protocolInit();
 
 #ifdef UNIT_TESTING
-	#pragma pack(pop)
+    #pragma pack()
 #endif
 #endif /* PROTOCOL_H_ */
