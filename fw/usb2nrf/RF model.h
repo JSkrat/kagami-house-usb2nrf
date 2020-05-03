@@ -18,7 +18,11 @@
 
 #include "../usb2nrf/defines.h"
 #include "../usb2nrf/nrf24l01.h"
-#include "../usb2nrf/nRF model.h"
+#ifndef UNIT_TESTING
+    #include "nRF model.h"
+#else
+    #include "../usb2nrf_tests/nRF model.h"
+#endif
 
 
 typedef enum {
@@ -48,7 +52,6 @@ typedef struct {
 } tRfPacket;
 
 void rf_init();
-void checkTransieverRXBuf();
 void transmitPacket(tRfPacket *packet);
 void RFListen(t_address *address);
 eRFMode switchRFMode(eRFMode newMode);
@@ -56,6 +59,10 @@ void setListenAddress(t_address *address);
 tRfPacket* nextRFBufferElement();
 
 #ifdef UNIT_TESTING
+	// one call for every millisecond of time
+	// for testing response timeouts in a master mode
+	void msEvent(void);
+	
 	#pragma pack(pop)
 #endif
 

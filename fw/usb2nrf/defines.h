@@ -42,6 +42,7 @@
 /*** transiever ***/
 #define MAC_SIZE 5
 #define PAYLOAD_SIZE 32
+#define SLAVE_RESPONSE_TIMEOUT_MS 20
 
 #define portTransiever PORTB
 #define poTransiever_IRQ PORTB0

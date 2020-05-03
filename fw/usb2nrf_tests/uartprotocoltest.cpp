@@ -27,7 +27,7 @@ UARTProtocolTest::UARTProtocolTest()
 {
     UARTBeginTransaction();
     for (unsigned int i = 0; i < request.size(); i++) {
-        if (i == ((request.size()-1)) != UARTProcessNextByte(request.at(i), response)) {
+        if ((i == ((request.size()-1))) != UARTProcessNextByte(request.at(i), response)) {
             return ::testing::AssertionFailure() << "request byte " << i << ", "
                                                  << "request length " << request.size() << ", "
                                                  << std::endl;
@@ -42,8 +42,8 @@ UARTProtocolTest::UARTProtocolTest()
 TEST_F(UARTProtocolTest, basic_format_test) {
     uPackage response;
     ASSERT_TRUE(this->processPacket({0, mcStatus, 0}, &response));
-    ASSERT_EQ(mcStatus | 0x80, response.pkg.command) << "wrong command field";
-    ASSERT_LT(0, response.pkg.payloadSize) << "no payload";
+    ASSERT_EQ(mcStatus | 0x80, response.pkg.command) << "wrong command field in the response";
+    ASSERT_LT(0, response.pkg.payloadSize) << "no payload in the response";
     ASSERT_EQ(eucOk, response.pkg.payload[0]) << "response code is not Ok";
 }
 

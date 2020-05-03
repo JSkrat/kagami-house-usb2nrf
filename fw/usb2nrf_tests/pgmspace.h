@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "../usb2nrf/nrf24l01.h"
 #include "../usb2nrf/nrf24l01-mnemonics.h"
+#include "sstring.h"
 
 #define PROGMEM __attribute__((__section__("progmem")))
 //#define const
@@ -21,8 +22,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-extern nRF24L01 *rfTransiever;
 
 void _delay_us(int delay);
 
