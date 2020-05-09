@@ -32,8 +32,6 @@ int SerialThread::getQueueSize()
     return this->msgQueue.size();
 }
 
-
-
 void SerialThread::run()
 {
     bool currentPortNameChanged = false;
@@ -49,15 +47,15 @@ void SerialThread::run()
             this->m_mutex.unlock();
             continue;
         }
-        this->m_mutex.unlock();
         Message *msg = &(this->msgQueue.head());
+        this->m_mutex.unlock();
         if (currentPortName != msg->portName) {
             currentPortName = msg->portName;
             currentPortNameChanged = true;
 
             if (currentPortName.isEmpty()) {
                 emit this->error(tr("No port name specified"));
-                this->msgQueue.dequeue();
+                this->syncDequeue();
                 continue;
             }
         } else {
@@ -73,7 +71,7 @@ void SerialThread::run()
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit this->error(tr("Can't open %1, error code %2")
                            .arg(currentPortName).arg(serial.error()));
-                this->msgQueue.dequeue();
+                this->syncDequeue();
                 continue;
             }
         }
@@ -97,8 +95,15 @@ void SerialThread::run()
             emit this->timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-        this->msgQueue.dequeue(); 
+        this->syncDequeue();
     }
+}
+
+void SerialThread::syncDequeue()
+{
+    this->m_mutex.lock();
+    this->msgQueue.dequeue();
+    this->m_mutex.unlock();
 }
 
 void SerialThread::parseByte(uint8_t byte) {
