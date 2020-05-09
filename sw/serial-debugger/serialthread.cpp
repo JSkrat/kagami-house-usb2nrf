@@ -97,7 +97,7 @@ void SerialThread::run()
             emit this->timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-        this->msgQueue.dequeue();
+        this->msgQueue.dequeue(); 
     }
 }
 
@@ -107,6 +107,7 @@ void SerialThread::parseByte(uint8_t byte) {
         epsHeader, // 0xC0, for validator
         epsVersion,
         epsCommand,
+        epsResponseCode,
         epsLength,
         epsData,
         epsEnd, // should be at the receiving 0xC0
@@ -114,7 +115,7 @@ void SerialThread::parseByte(uint8_t byte) {
     };
     static eParserState state;
 #define sbyte static_cast<char>(byte)
-    static unsigned int currentPacketLength = 0;
+//    static unsigned int currentPacketLength = 0;
 
     switch (static_cast<uint8_t>(byte)) {
     case 0xC0: {
@@ -123,7 +124,10 @@ void SerialThread::parseByte(uint8_t byte) {
             // ignore, we already emitted signal about that
         } else if (epsEnd != state) {
             emit this->error(
-                        QString("Byte unstuffing error: received 0xC0 in not-end state. Buffer contents is %1")
+                        QString("Byte unstuffing error: received 0xC0 in not-end (%1) state. Response command is %2, code is %3, buffer contents is %4")
+                        .arg(state)
+                        .arg(this->responseCommand, 2, 16)
+                        .arg(this->responseCode, 2, 16)
                         .arg(QString(this->currentResponse.toHex(':')))
                         );
         }
@@ -186,27 +190,38 @@ void SerialThread::parseByte(uint8_t byte) {
             state = epsError;
             return;
         } else {
-            this->currentResponse.append(byte & 0x7F);
-            state = epsLength;
+            this->responseCommand = byte & 0x7F;
+            state = epsResponseCode;
         }
+        break;
+    }
+    case epsResponseCode: {
+        this->responseCode = byte;
+        state = epsLength;
         break;
     }
     case epsLength: {
         // no validation for length until end of packet
-        currentPacketLength = byte;
+        this->currentPacketLength = byte;
         state = epsData;
+        if (0 == this->currentPacketLength) goto parseData;
         break;
     }
     case epsData: {
         // we can validate length here \0/
-        if (static_cast<unsigned int>(this->currentResponse.length()) >= currentPacketLength + 1) {
+        if (static_cast<unsigned int>(this->currentResponse.length()) >= this->currentPacketLength) {
             emit this->error("Response parsing error: length is less than bytes received");
             state = epsError;
             return;
         } else {
             this->currentResponse.append(sbyte);
-            if (static_cast<unsigned int>(this->currentResponse.length()) == currentPacketLength + 1) {
-                emit this->response(static_cast<uint8_t>(this->currentResponse[0]), this->currentResponse.mid(1));
+parseData:
+            if (static_cast<unsigned int>(this->currentResponse.length()) == this->currentPacketLength) {
+                emit this->response(
+                            this->responseCommand,
+                            this->responseCode,
+                            this->currentResponse
+                        );
                 // switch to error, because next byte should be either 0xC0 or be ignored
                 state = epsEnd;
             }
