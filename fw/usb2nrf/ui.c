@@ -50,8 +50,10 @@ void ui_init() {
 	portLEDS |= (1 << poLED_D1);
 	
 	// lcd
+	#ifdef USE_LCD
 	DDRC = (1 << poLCD_CLK) | (1 << poLCD_CS) | (1 << poLCD_DATA) | (1 << poLCD_RST);
 	lcdInit();
+	#endif
 	
 	// timer to update leds, CTC mode, from 0 to OCR0A
 	// clk io / 64 (tick every 4us, need 250 ticks for 1ms)
@@ -61,9 +63,11 @@ void ui_init() {
 	
 	TIMSK0 = (1 << TOIE0);
 	
+	#ifdef USE_LCD
 	lcdClear();
 	lcdLocate(0, 0);
 	lcdPrint(&m_hello, normal);
+	#endif
 }
 
 ISR(TIMER0_OVF_vect) {
@@ -105,8 +109,10 @@ void ui_redraw() {
 	// leds
 	
 	// no screens for now
+	#ifdef USE_LCD
 	lcdLocate(2, 0);
 	ui_print(ui_s_uart_packet_fsm, normal);
+	#endif
 }
 
 void ui_error() {
@@ -118,6 +124,7 @@ void ui_print(ui_subsystems subsystem, tFontStyle style) {
 		ui_error();
 		return;
 	}
+	#ifdef USE_LCD
 	switch (subsystems[subsystem].type) {
 		case ui_v_flash_str: {
 			lcdPrint(subsystems[subsystem].value.str, style);
@@ -131,6 +138,7 @@ void ui_print(ui_subsystems subsystem, tFontStyle style) {
 			lcdRamPrint(SStr(subsystems[subsystem].value.integer), style);
 		}
 	}
+	#endif
 }
 
 void ui_subsystem_str(ui_subsystems subsystem, const string *message, bool in_flash) {
