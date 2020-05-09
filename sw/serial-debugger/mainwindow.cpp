@@ -49,7 +49,7 @@ enum eUARTResponseCodes {
 
 const QHash<enum eModemCommand, QString> responseEtcText = {
     {mcListen, "listening"},
-    {mcSetMode, "requested mode set (if 0)"},
+    {mcSetMode, "requested mode set"},
     {mcClearTX, "clear TX ok"},
     {mcSetListenAddress, "master address set"},
 };
@@ -108,7 +108,7 @@ void MainWindow::addMessage(QByteArray from, QString decorator, QString message,
                 .arg(background.blue(), 2, 16, QChar('0'))
                 .arg(QString(from.toHex(':')).toUpper())
                 .arg(message)
-                .arg(decorator)
+                .arg(decorator.toHtmlEscaped())
                 );
 }
 
@@ -117,27 +117,27 @@ void MainWindow::addMessage(QByteArray from, QString decorator, QByteArray messa
 }
 
 void MainWindow::addSendMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "Send to", message, QColor::fromRgbF(1, 0.9, 0.9));
+    this->addMessage(from, "> Send to", message, QColor::fromRgbF(1, 0.9, 0.9));
 }
 
 void MainWindow::addACKMessage(QByteArray from, QByteArray message, bool timeout) {
     if (! timeout) {
-        this->addMessage(from, "ACK from", message, QColor::fromRgbF(1, 1, 0.9));
+        this->addMessage(from, "< ACK from", message, QColor::fromRgbF(1, 1, 0.9));
     } else {
-        this->addMessage(from, "ACK timeout from", message, QColor::fromRgbF(1, 0.9, 0.8));
+        this->addMessage(from, "< ACK timeout from", message, QColor::fromRgbF(1, 0.9, 0.8));
     }
 }
 
 void MainWindow::addReceiveMessage(QByteArray from, QByteArray message, bool timeout) {
     if (! timeout) {
-        this->addMessage(from, "Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
+        this->addMessage(from, "< Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
     } else {
-        this->addMessage(from, "Response timeout from", message, QColor::fromRgbF(0.9, 1, 0.8));
+        this->addMessage(from, "< Response timeout from", message, QColor::fromRgbF(0.9, 1, 0.8));
     }
 }
 
 void MainWindow::addEtcMessage(QByteArray from, QString message) {
-    this->addMessage(from, "system message", QString("<i>%1</i>").arg(message), QColor::fromRgbF(0.9, 0.9, 0.9));
+    this->addMessage(from, "system message", QString("<i>%1</i>").arg(message.toHtmlEscaped()), QColor::fromRgbF(0.9, 0.9, 0.9));
 }
 
 void MainWindow::statusUpgrade()
@@ -289,7 +289,7 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
             RX_ADDR_P1[i]->setText(
                         QString("(%1):%2")
                         .arg(QString(response.mid(0x05, 4).toHex(':')))
-                        .arg(static_cast<uint8_t>(response[0x0A + i]), 2, 16)
+                        .arg(static_cast<uint8_t>(response[0x0A + i]), 2, 16, QChar('0'))
                         );
         }
         this->serialTransaction(QByteArray(1, mcReadRFBuffer));
@@ -301,19 +301,19 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
             break;
         }
         case eucAckPacket: {
-            this->addACKMessage(response.mid(0, 5), response.mid(6), false);
+            this->addACKMessage(response.mid(0, 5), response.mid(5), false);
             break;
         }
         case eucAckTimeout: {
-            this->addACKMessage(response.mid(0, 5), response.mid(6), true);
+            this->addACKMessage(response.mid(0, 5), response.mid(5), true);
             break;
         }
         case eucDataPacket: {
-            this->addReceiveMessage(response.mid(0, 5), response.mid(6), false);
+            this->addReceiveMessage(response.mid(0, 5), response.mid(5), false);
             break;
         }
         case eucSlaveResponseTimeout: {
-            this->addReceiveMessage(response.mid(0, 5), response.mid(6), true);
+            this->addReceiveMessage(response.mid(0, 5), response.mid(5), true);
             break;
         }
         }
@@ -322,7 +322,7 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
     case mcTransmit: {
         this->addEtcMessage(
                     response.mid(0, 5),
-                    QString("transmission accepted</i> %1<i>").arg(QString(response.mid(5).toHex(':')))
+                    QString("< Transmission accepted %1").arg(QString("0x%1").arg(code, 2, 16, QChar('0')))
                     );
         break;
     }
@@ -330,14 +330,18 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
         if (responseEtcText.keys().contains(eCommand)) {
             this->addEtcMessage(
                         response,
-                        responseEtcText[eCommand]
+                        QString("< %1 0x%2 <%3>")
+                            .arg(responseEtcText[eCommand])
+                            .arg(code, 2, 16, QChar('0'))
+                            .arg(QString(response.toHex(':')))
                         );
         } else {
-            this->ui->statusbar->showMessage(QString("Unknown response %1").arg(static_cast<uint8_t>(response[0]), 2, 16), 5000);
+            this->ui->statusbar->showMessage(QString("Unknown response %1").arg(static_cast<uint8_t>(eCommand), 2, 16, QChar('0')), 5000);
             this->addEtcMessage(
                         QByteArray(),
-                        QString("unknown response</i> %1 %2<i>")
+                        QString("< Unknown response cmd %1 0x%2 <%3>")
                             .arg(command, 2, 16, QChar('0'))
+                            .arg(code, 2, 16, QChar('0'))
                             .arg(QString(response.toHex(':')))
                         );
         }
@@ -382,7 +386,7 @@ void MainWindow::on_pbClearTx_clicked()
     QByteArray pkt;
     pkt.append(mcClearTX);
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt, "clear tx queue");
+    this->addEtcMessage(pkt, "> Clear tx queue");
 }
 
 void MainWindow::on_pbSetModeMaster_clicked()
@@ -391,7 +395,7 @@ void MainWindow::on_pbSetModeMaster_clicked()
     pkt.append(mcSetMode);
     pkt.append(2);
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt, "Set mode Master");
+    this->addEtcMessage(pkt, "> Set mode Master");
 }
 
 void MainWindow::on_pbSetModeSlave_clicked()
@@ -400,7 +404,7 @@ void MainWindow::on_pbSetModeSlave_clicked()
     pkt.append(mcSetMode);
     pkt.append(1);
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt, "Set mode Slave");
+    this->addEtcMessage(pkt, "> Set mode Slave");
 }
 
 void MainWindow::on_pbSetModeDebug_clicked()
@@ -409,7 +413,7 @@ void MainWindow::on_pbSetModeDebug_clicked()
     pkt.append(mcSetMode);
     pkt.append(static_cast<char>(0));
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt, "Set mode Debug");
+    this->addEtcMessage(pkt, "> Set mode Debug");
 }
 
 void MainWindow::on_pbSetMasterAddress_clicked()
@@ -420,7 +424,7 @@ void MainWindow::on_pbSetMasterAddress_clicked()
         pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
     }
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt.mid(1), "set master address");
+    this->addEtcMessage(pkt.mid(1), "> Set master address");
 }
 
 void MainWindow::on_pbListen_clicked()
@@ -431,7 +435,7 @@ void MainWindow::on_pbListen_clicked()
         pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
     }
     this->serialTransaction(pkt);
-    this->addEtcMessage(pkt.mid(1), "listen");
+    this->addEtcMessage(pkt.mid(1), "> Listen");
 }
 
 void MainWindow::on_pbTransmitTo_clicked()
