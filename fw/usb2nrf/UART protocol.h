@@ -29,13 +29,14 @@ typedef enum {
 } eUARTResponseCodes;
 
 // packets from uart
-#define HEADER_SIZE (3)
+//#define HEADER_SIZE (3)
+#define RESPONSE_HEADER_SIZE (4)
 typedef union {
-	uint8_t packageBuffer[(HEADER_SIZE + PAYLOAD_SIZE)];
+	uint8_t packageBuffer[(RESPONSE_HEADER_SIZE + PAYLOAD_SIZE)];
 	struct {
 		uint8_t protocolVersion;
 		eModemCommand command;
-                eUARTResponseCodes code;
+        eUARTResponseCodes code;
 		uint8_t payloadSize;
 		uint8_t payload[PAYLOAD_SIZE];
 	} pkg;

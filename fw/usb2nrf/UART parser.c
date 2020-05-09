@@ -88,7 +88,7 @@ ISR(USART_UDRE_vect) {
 
 void uSendPacket(uPackage *packet) {
 	uQueueChar(0xC0);
-	for (int8_t i = 0; i < packet->pkg.payloadSize + HEADER_SIZE; i++) {
+	for (int8_t i = 0; i < packet->pkg.payloadSize + RESPONSE_HEADER_SIZE; i++) {
 		char c = packet->packageBuffer[i];
 		if (0xC0 == c) {
 			uQueueChar(0xDB);
