@@ -35,6 +35,7 @@ typedef union {
 	struct {
 		uint8_t protocolVersion;
 		eModemCommand command;
+                eUARTResponseCodes code;
 		uint8_t payloadSize;
 		uint8_t payload[PAYLOAD_SIZE];
 	} pkg;
