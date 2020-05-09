@@ -13,6 +13,8 @@
 #define bigCharDataWidth ((uint8_t) 20)
 #define bigCharWidth ((uint8_t) 12)
 
+#ifdef USE_LCD
+
 uint8_t lcdMutex = 0;
 uint8_t lcd_x, lcd_y;
 
@@ -299,3 +301,4 @@ void lcdClear() {
         LCD_write_byte(0, 1);
     }
 }
+#endif

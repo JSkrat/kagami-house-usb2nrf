@@ -18,6 +18,7 @@
 
 
 /*** LCD ***/
+//#define USE_LCD
 #define portLCD PORTC
 #define poLCD_CS PORTC3
 #define poLCD_DATA PORTC4
