@@ -64,6 +64,8 @@ ISR(PCINT0_vect) {
 		nRF24L01_read_register(rfTransiever, TX_ADDR, address.data, MAC_SIZE);
 		if (cNRF_TransmissionFailed) (*cNRF_TransmissionFailed)(&address, NULL);
 		uint8_t data = _BV(MAX_RT);
+		// TX FIFO does not pop failed element, if we won't clean it, it will be re-sent again
+		nRF24L01_flush_transmit_message(rfTransiever);
 		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
 	}
 	if (rfTransiever->status & _BV(RX_DR)) {
