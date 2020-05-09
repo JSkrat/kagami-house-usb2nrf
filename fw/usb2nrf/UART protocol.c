@@ -33,16 +33,16 @@ static uPackage reqBuffer;
 void UARTGenerateErrorResponse(const eUARTResponseCodes code, uPackage *response) {
     response->pkg.protocolVersion = uPPProtoVer;
     response->pkg.command = mcNoFunction | mcResponseFlag;
-    response->pkg.payloadSize = 1;
-    response->pkg.payload[0] = code;
+    response->pkg.payloadSize = 0;
+    response->pkg.code = code;
 }
 
 void UARTGenerateResponse(const uPackage *request, uPackage *response) {
 	response->pkg.protocolVersion = uPPProtoVer;
     response->pkg.command = request->pkg.command | mcResponseFlag;
-	response->pkg.payloadSize = 1;
+	response->pkg.payloadSize = 0;
 	if (uPPProtoVer != request->pkg.protocolVersion) {
-		response->pkg.payload[0] = eucBadVersion;
+		response->pkg.code = eucBadVersion;
 		return;
 	}
 	// search for the requested command
@@ -52,18 +52,18 @@ void UARTGenerateResponse(const uPackage *request, uPackage *response) {
             fUARTFunction f = (fUARTFunction) pgm_read_ptr(&(UARTFunctions[i].function));
 			if (NULL == f) {
 				// generate response "not implemented"
-				response->pkg.payload[0] = eucNotImplemented;
+				response->pkg.code = eucNotImplemented;
 			} else {
 				scString sUARTRequest = {.length = request->pkg.payloadSize, .data = &request->pkg.payload[0]};
-				sString sUARTResponse = {.length = 0, .data = &response->pkg.payload[1]};
-				response->pkg.payload[0] = f(&sUARTRequest, &sUARTResponse);
-				response->pkg.payloadSize = sUARTResponse.length + 1;
+				sString sUARTResponse = {.length = 0, .data = &response->pkg.payload[0]};
+				response->pkg.code = f(&sUARTRequest, &sUARTResponse);
+				response->pkg.payloadSize = sUARTResponse.length;
 			}
 			return;
 		}
 	}
 	// command not found, generate error response about it
-	response->pkg.payload[0] = eucBadCommand;
+	response->pkg.code = eucBadCommand;
 }
 
 void UARTBeginTransaction() {

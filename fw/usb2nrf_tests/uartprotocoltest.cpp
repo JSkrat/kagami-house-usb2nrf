@@ -43,26 +43,26 @@ TEST_F(UARTProtocolTest, basic_format_test) {
     uPackage response;
     ASSERT_TRUE(this->processPacket({0, mcStatus, 0}, &response));
     ASSERT_EQ(mcStatus | 0x80, response.pkg.command) << "wrong command field in the response";
+    ASSERT_EQ(eucOk, response.pkg.code) << "response code is not Ok";
     ASSERT_LT(0, response.pkg.payloadSize) << "no payload in the response";
-    ASSERT_EQ(eucOk, response.pkg.payload[0]) << "response code is not Ok";
 }
 
 TEST_F(UARTProtocolTest, negative_test) {
     uPackage response;
     ASSERT_TRUE(this->processPacket({255}, &response));
     EXPECT_EQ(mcNoFunction | 0x80, response.pkg.command);
-    ASSERT_EQ(1, response.pkg.payloadSize);
-    ASSERT_EQ(eucBadVersion, response.pkg.payload[0]);
+    ASSERT_EQ(eucBadVersion, response.pkg.code);
+    ASSERT_EQ(0, response.pkg.payloadSize);
 
     ASSERT_TRUE(this->processPacket({0, mcEcho | mcResponseFlag}, &response));
     EXPECT_EQ(mcNoFunction | 0x80, response.pkg.command);
-    ASSERT_EQ(1, response.pkg.payloadSize);
-    ASSERT_EQ(eucBadCommand, response.pkg.payload[0]);
+    ASSERT_EQ(eucBadCommand, response.pkg.code);
+    ASSERT_EQ(0, response.pkg.payloadSize);
 
     ASSERT_TRUE(this->processPacket({0, mcNoFunction, 0}, &response));
     EXPECT_EQ(mcNoFunction | 0x80, response.pkg.command);
-    ASSERT_EQ(1, response.pkg.payloadSize);
-    ASSERT_EQ(eucBadCommand, response.pkg.payload[0]);
+    ASSERT_EQ(eucBadCommand, response.pkg.code);
+    ASSERT_EQ(0, response.pkg.payloadSize);
 }
 
 }
