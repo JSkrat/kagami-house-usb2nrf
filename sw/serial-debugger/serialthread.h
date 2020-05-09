@@ -8,6 +8,17 @@
 #include <QQueue>
 #include <stdint.h>
 
+enum eParserState {
+    epsHeader, // 0xC0, for validator
+    epsVersion,
+    epsCommand,
+    epsResponseCode,
+    epsLength,
+    epsData,
+    epsEnd, // should be at the receiving 0xC0
+    epsError, // silently wait 0xC0 in this state
+};
+
 class Message {
 public:
     explicit Message(const QByteArray &request, const QString &portName, int waitTimeout);
@@ -43,23 +54,27 @@ private:
 
     QString m_portName;
     QByteArray m_request;
-    int m_waitTimeout = 10000;
+    int m_waitTimeout;
     QMutex m_mutex;
     QWaitCondition m_cond;
-    bool m_quit = false;
+    bool m_quit;
 
     // queueing
 //    QList<QByteArray> queue;
     // parsing
+    bool esc;
+    eParserState state;
     unsigned int currentPacketLength;
     uint8_t responseCommand;
     uint8_t responseCode;
     QByteArray currentResponse;
 
+    void init();
     void syncDequeue();
     QByteArray stuffByte(int8_t byte);
     QByteArray stuffBytes(const QByteArray &from);
     void parseByte(uint8_t byte);
+    void emitError(QString message);
 };
 
 #endif // SERIALTHREAD_H
