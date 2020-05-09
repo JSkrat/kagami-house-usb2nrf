@@ -146,7 +146,7 @@ void MainWindow::statusUpgrade()
     this->serialTransaction(QByteArray(1, mcStatus));
 }
 
-void MainWindow::serialResponse(const uint8_t command, const QByteArray &response)
+void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const QByteArray &response)
 {
     enum eModemCommand eCommand = static_cast<enum eModemCommand>(command);
 
@@ -296,24 +296,24 @@ void MainWindow::serialResponse(const uint8_t command, const QByteArray &respons
         break;
     }
     case mcReadRFBuffer: {
-        switch (response.at(0)) {
+        switch (code) {
         case eucNoPackets: {
             break;
         }
         case eucAckPacket: {
-            this->addACKMessage(response.mid(1, 5), response.mid(7), false);
+            this->addACKMessage(response.mid(0, 5), response.mid(6), false);
             break;
         }
         case eucAckTimeout: {
-            this->addACKMessage(response.mid(1, 5), response.mid(7), true);
+            this->addACKMessage(response.mid(0, 5), response.mid(6), true);
             break;
         }
         case eucDataPacket: {
-            this->addReceiveMessage(response.mid(1, 5), response.mid(7), false);
+            this->addReceiveMessage(response.mid(0, 5), response.mid(6), false);
             break;
         }
         case eucSlaveResponseTimeout: {
-            this->addReceiveMessage(response.mid(1, 5), response.mid(7), true);
+            this->addReceiveMessage(response.mid(0, 5), response.mid(6), true);
             break;
         }
         }

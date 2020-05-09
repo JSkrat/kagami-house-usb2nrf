@@ -27,7 +27,7 @@ public:
 public slots:
     void statusUpgrade();
 
-    void serialResponse(const uint8_t command, const QByteArray &response);
+    void serialResponse(const uint8_t command, const uint8_t code, const QByteArray &response);
     void serialTimeout(const QString &message);
     void serialError(const QString &message);
 

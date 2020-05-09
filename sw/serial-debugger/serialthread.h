@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QQueue>
+#include <stdint.h>
 
 class Message {
 public:
@@ -30,7 +31,7 @@ signals:
     /// emitted after receiving response.
     /// Response is unstuffed with frame begin, protocol version and length cut off
     /// and command msb reset to 0
-    void response(const uint8_t command, const QByteArray &response);
+    void response(const uint8_t command, const uint8_t code, const QByteArray &response);
     /// emitted at connection errors and at parsing response errors
     void error(const QString &s);
     void timeout(const QString &s);
@@ -42,7 +43,7 @@ private:
 
     QString m_portName;
     QByteArray m_request;
-    int m_waitTimeout = 10;
+    int m_waitTimeout = 10000;
     QMutex m_mutex;
     QWaitCondition m_cond;
     bool m_quit = false;
@@ -50,6 +51,9 @@ private:
     // queueing
 //    QList<QByteArray> queue;
     // parsing
+    unsigned int currentPacketLength;
+    uint8_t responseCommand;
+    uint8_t responseCode;
     QByteArray currentResponse;
 
     QByteArray stuffByte(int8_t byte);
