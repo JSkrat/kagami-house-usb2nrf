@@ -56,6 +56,7 @@ private:
     uint8_t responseCode;
     QByteArray currentResponse;
 
+    void syncDequeue();
     QByteArray stuffByte(int8_t byte);
     QByteArray stuffBytes(const QByteArray &from);
     void parseByte(uint8_t byte);
