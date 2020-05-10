@@ -8,6 +8,7 @@
 
 enum eModemCommand {
     mcEcho = 0,
+    mcVersion = 1,
     mcStatus = 8,
     mcAddresses = 9,
 
@@ -59,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , StatusUpgradeTimer(this)
     , serial(this)
+    , title("Kagami house usb2nrf debugger")
 {
     ui->setupUi(this);
     this->ui->teConsole->clear();
@@ -67,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->ui->statusbar->addPermanentWidget(this->ui->lQueueSize);
 
-    this->StatusUpgradeTimer.setInterval(100);
+    this->StatusUpgradeTimer.setInterval(150);
     connect(&(this->StatusUpgradeTimer), &QTimer::timeout, this, &MainWindow::statusUpgrade);
 //    this->StatusUpgradeTimer.start();
 
@@ -143,7 +145,7 @@ void MainWindow::addEtcMessage(QByteArray from, QString message) {
 void MainWindow::statusUpgrade()
 {
     /// request modem status upgrade
-    this->serialTransaction(QByteArray(1, mcStatus));
+    this->serialTransaction(QByteArray(1, mcVersion));
 }
 
 void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const QByteArray &response)
@@ -151,6 +153,20 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
     enum eModemCommand eCommand = static_cast<enum eModemCommand>(command);
 
     switch (eCommand) {
+    case mcVersion: {
+        QString version;
+        if (eucOk == code) {
+            uint64_t v = 0;
+            for (uint8_t i: response) {
+                v <<= 8;
+                v += i;
+            }
+            version = QString::number(v);
+        } else version = QString("(version error 0x%1)").arg(code, 2, 16, QChar('0'));
+        this->setWindowTitle(QString("%1 — build %2").arg(this->title).arg(version));
+        this->serialTransaction(QByteArray(1, mcStatus));
+        break;
+    }
     case mcStatus: {
         // modem status
 //        this->ui->statusbar->showMessage(response.toHex(':'));

@@ -58,5 +58,6 @@ private:
     QString port = "COM8";
     void setCheckBoxValue(QCheckBox *checkbox, bool value);
     void serialTransaction(QByteArray data);
+    const QString title;
 };
 #endif // MAINWINDOW_H
