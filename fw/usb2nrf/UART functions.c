@@ -11,6 +11,7 @@
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #include "../usb2nrf/nRF model.h"
 #include "../usb2nrf/RF model.h"
+#include "../usb2nrf/version.h"
 #include <string.h>
 #ifndef UNIT_TESTING
     #include <avr/pgmspace.h>
@@ -32,6 +33,12 @@ uint8_t uStatus(const scString *request, sString *response) {
 	//*((uint16_t*) (respBuffer.pkg.payload+1)) = rfPacketsSent;
 	//*((uint16_t*) (respBuffer.pkg.payload+3)) = rfTimeouts;
 	//*((uint16_t*) (respBuffer.pkg.payload+5)) = badRFPackets;
+	return eucOk;
+}
+
+uint8_t uVersion(const scString *request, sString *response) {
+	response->length = 4;
+	*((uint32_t*) response->data) = BUILD_NUMBER;
 	return eucOk;
 }
 
@@ -136,6 +143,7 @@ uint8_t uTransmit(const scString *request, sString *response) {
 
 const PROGMEM tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER] = {
 	{ mcStatus, &uStatus },
+	{ mcVersion, &uVersion },
 	{ mcAddresses, &uAddresses },
 		
 	{ mcSetChannel, &uSetChannel },

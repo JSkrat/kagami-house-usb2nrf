@@ -23,6 +23,7 @@ typedef uint8_t (*fUARTFunction)(const scString*, sString*);
 // modem commands
 typedef enum {
 	mcEcho = 0,
+	mcVersion = 1,
 	mcStatus = 8,
 	mcAddresses = 9,
 	
@@ -56,7 +57,7 @@ typedef struct {
 } tUARTCommandItem;
 
 
-#define UART_FUNCTIONS_NUMBER 15
+#define UART_FUNCTIONS_NUMBER 16
 extern const tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER];
 
 #endif /* UART_FUNCTIONS_H_ */
