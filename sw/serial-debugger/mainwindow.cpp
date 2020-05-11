@@ -220,7 +220,7 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
         QStringList RF_DR = {"1Mbps", "2Mbps", "250kbps", "reserved"};
         this->ui->lRF_DR->setText(RF_DR[2 * (modemRF_SETUP >> 5 & 1) + (modemRF_SETUP >> 3 & 1)]);
         QStringList RF_PWR = {"-18dBm", "-12dBm", "-6dBm", "0dBm"};
-        this->ui->lRF_PWR->setText(RF_PWR[modemRF_SETUP & 0x03]);
+        this->ui->lRF_PWR->setText(RF_PWR[(modemRF_SETUP >> 1) & 0x03]);
         // status
         uint8_t modemStatus = static_cast<uint8_t>(response[7]);
         this->setCheckBoxValue(this->ui->cbRX_DR, 0x40 & modemStatus);
