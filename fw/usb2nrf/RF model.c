@@ -220,6 +220,7 @@ eRFMode switchRFMode(eRFMode newMode) {
 	RFMode = newMode;
 	switch (RFMode) {
 		case rmIdle: {
+			nRF_go_idle();
 			break;
 		}
 		case rmSlave: {
@@ -228,6 +229,7 @@ eRFMode switchRFMode(eRFMode newMode) {
 			break;
 		}
 		case rmMaster: {
+			nRF_go_idle();
 			break;
 		}
 		default:
