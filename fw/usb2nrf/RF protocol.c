@@ -53,6 +53,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	RESPONSE_DATA->rsVersion = PROTOCOL_VERSION;
 	RESPONSE_DATA->rsTransactionId = REQUEST_DATA->rqTransactionId;
     RESPONSE_DATA->rsCode = (uint8_t) validation;
+	*responseLength = 3; // length of the empty response, without any data
 	switch (validation) {
 		case ercOk: {
             fRFFunction method = (fRFFunction) pgm_read_ptr(&(RFFunctions[REQUEST_DATA->rqFunctionId]));
@@ -73,7 +74,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 				&requestArg,
 				&responseArg
 			);
-			*responseLength = responseArg.length;
+			*responseLength += responseArg.length;
 			break;
 		}
 		/*case ercNotConsecutiveTransactionId: {

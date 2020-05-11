@@ -238,6 +238,9 @@ python "$(MSBuildProjectDirectory)\build number.py" "$(MSBuildProjectDirectory)\
     <Compile Include="units_structure.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="version.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="make-messages.py">

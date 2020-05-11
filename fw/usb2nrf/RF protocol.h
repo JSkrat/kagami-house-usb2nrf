@@ -44,6 +44,8 @@ typedef struct {
 	uint8_t rsData[];
 } sResponse;
 
+#define RESPONSE_HEADER_SIZE ((uint8_t) offsetof(sResponse, rsData))
+
 enum eResponseCodes {
 	ercOk = 0,
 	

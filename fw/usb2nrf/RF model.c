@@ -18,7 +18,6 @@
 #include "sstring.h"
 
 void checkTransieverRXBuf(void);
-void parseRFPacket(tRfPacket *pkg);
 void dataTransmitted(sString *address, sString *payload);
 void dataReceived(sString *address, sString *payload);
 void transmissionFailed(sString *address, sString *payload);
@@ -115,7 +114,16 @@ void dataReceived(sString *address, sString *payload) {
 		}
 		case rmSlave: {
 			// in slave mode we need to respond to that packet and listen again
-			parseRFPacket(request);
+			tRfPacket response;
+			// copy address
+			memcpy(&response.address, request->address, sizeof(t_address));
+			// minimum response size if 3 bytes: version, transaction id, response code
+			// data is the last field, so its starting is minimal length of the packet
+			generateResponse(request->payloadLength, request->payloadData, &(response.payloadLength), (uint8_t*) &(response.payloadData));
+			//lastSentPacketStatus = response.msg.data[RF_RESP_CODE];
+			nRF_transmit((uint8_t*)&(response.address), response.payloadLength, &(response.payloadData[0]));
+			// after that we're waiting for either ack from master or ack timeout
+
 			// also remove pushed to the rf buffer packet, no one is gonna read it
 			nextRFBufferElement();
 			break;
@@ -144,7 +152,7 @@ void dataTransmitted(sString *address, sString *payload) {
 		case rmMaster: {
 			// and here we're waiting for the response, but not forever
 			responseTimeout = SLAVE_RESPONSE_TIMEOUT_MS;
-			RFListen((uint8_t*)&ListenAddress);
+			RFListen((uint8_t*) &ListenAddress);
 			// no break
 		}
 		case rmIdle: {
@@ -152,7 +160,7 @@ void dataTransmitted(sString *address, sString *payload) {
 		}
 		case rmSlave: {
 			// ack can be only for our response, so we know here transaction is done, we're back in listen state
-			RFListen((uint8_t*)&ListenAddress);
+			RFListen((uint8_t*) &ListenAddress);
 			// pop out pushed to rf buffer packet, no one is gonna read it
 			nextRFBufferElement();
 			break;
@@ -179,7 +187,7 @@ void transmissionFailed(sString *address, sString *payload) {
 		}
 		case rmSlave: {
 			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
-			RFListen((uint8_t*)&ListenAddress);
+			RFListen((uint8_t*) &ListenAddress);
 			nextRFBufferElement();
 			break;
 		}
@@ -240,19 +248,3 @@ void RFTransmit(tRfPacket *packet) {
 	memcpy(ListenAddress, packet->address, MAC_SIZE);
 	nRF_transmit((uint8_t*)&(packet->address), packet->payloadLength, (uint8_t*)&(packet->payloadData));
 };
-
-/**
- * process received packet as a slave
- */
-void parseRFPacket(tRfPacket *request) {
-	tRfPacket response;
-	// copy address
-	memcpy(&response.address, request->address, sizeof(t_address));
-	// minimum response size if 3 bytes: version, transaction id, response code
-	// data is the last field, so its starting is minimal length of the packet
-	generateResponse(request->payloadLength, request->payloadData, &(response.payloadLength), (uint8_t*) &(response.payloadData));
-	//lastSentPacketStatus = response.msg.data[RF_RESP_CODE];
-	nRF_transmit((uint8_t*)&(response.address), response.payloadLength, &(response.payloadData[0]));
-	// after that we're waiting for either ack from master or ack timeout
-	// next action will be there
-}
