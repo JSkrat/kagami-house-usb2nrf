@@ -42,13 +42,14 @@ void nRF_init() {
 	PORTB |= _BV(rfTransiever->miso.pin);
 	rfTransiever->sck.port = &portTransiever; rfTransiever->sck.pin = PORTB5;
 	nRF24L01_begin(rfTransiever);
+	// disable auto ack
+	wr = 0; nRF24L01_write_register(rfTransiever, EN_AA, &wr, 1);
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
-	// ARD 1ms, ARC 5
-	wr = 5 | 3 << ARD; nRF24L01_write_register(rfTransiever, SETUP_RETR, &wr, 1);
+	// ARD 1ms, ARC 5 (no need without auto ack)
+	//wr = 5 | 3 << ARD; nRF24L01_write_register(rfTransiever, SETUP_RETR, &wr, 1);
 	// enable pipe 0 receive (ACK won't get to us without that)
-	uint8_t current_pipes = _BV(0);
-	nRF24L01_write_register(rfTransiever, EN_RXADDR, &current_pipes, 1);
+	wr = _BV(0); nRF24L01_write_register(rfTransiever, EN_RXADDR, &wr, 1);
 }
 
 ISR(PCINT0_vect) {

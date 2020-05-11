@@ -60,13 +60,8 @@ void rf_init() {
 	protocolInit();
 	// reset buffer
 	rfbBegin = 0; rfbEnd = 0; rfbSize = 0;
-	// if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
-	//nListen();
-	total_requests = 0;
-	ok_responses = 0;
-	error_responses = 0;
-    missed_packets = 0;
-	ack_timeouts = 0;
+	init_rf_info();
+	// TODO if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 }
 
 /**
@@ -113,6 +108,7 @@ void dataReceived(sString *address, sString *payload) {
 			break;
 		}
 		case rmSlave: {
+			total_requests++;
 			// in slave mode we need to respond to that packet and listen again
 			tRfPacket response;
 			// copy address
@@ -120,7 +116,6 @@ void dataReceived(sString *address, sString *payload) {
 			// minimum response size if 3 bytes: version, transaction id, response code
 			// data is the last field, so its starting is minimal length of the packet
 			generateResponse(request->payloadLength, request->payloadData, &(response.payloadLength), (uint8_t*) &(response.payloadData));
-			//lastSentPacketStatus = response.msg.data[RF_RESP_CODE];
 			nRF_transmit((uint8_t*)&(response.address), response.payloadLength, &(response.payloadData[0]));
 			// after that we're waiting for either ack from master or ack timeout
 
@@ -191,6 +186,7 @@ void transmissionFailed(sString *address, sString *payload) {
 			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
 			RFListen((uint8_t*) &ListenAddress);
 			nextRFBufferElement();
+			ack_timeouts++;
 			break;
 		}
 	}

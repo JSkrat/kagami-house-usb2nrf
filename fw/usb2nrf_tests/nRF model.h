@@ -28,4 +28,6 @@ extern bool messageHaveBeenReceived;
 
 void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data);
 
+void nRF_go_idle();
+
 #endif /* NRF_MODEL_H_ */

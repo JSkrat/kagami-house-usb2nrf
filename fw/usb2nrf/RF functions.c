@@ -86,13 +86,14 @@ uint8_t rfNOP(const uint8_t unit, const scString *request, sString *response) {
 uint8_t getStatistics(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) request;
-	response->length = 10;
+	response->length = 12;
     #define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = ((uint16_t)value) >> 8
 	STORE_16(0, total_requests);
 	STORE_16(2, ok_responses);
 	STORE_16(4, error_responses);
     STORE_16(6, missed_packets);
 	STORE_16(8, ack_timeouts);
+	STORE_16(10, validation_errors);
 	return ercOk;
 }
 

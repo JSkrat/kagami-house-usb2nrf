@@ -104,3 +104,8 @@ void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
     memcpy(&(msg.data), data, length);
     nRF24L01_transmit(rfTransiever, address, &msg);
 }
+
+void nRF_go_idle()
+{
+
+}

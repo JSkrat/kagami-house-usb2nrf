@@ -112,6 +112,7 @@ TEST_F(FunctionsTest, TestGetStatistics) {
     error_responses = 0xCDBA;
     missed_packets = 0xBCA9;
     ack_timeouts = 0xAB98;
+    validation_errors = 0x7654;
     ASSERT_EQ(ercOk, (*(this->getFunction(eFGetStatistics)))(0, nullptr, &this->response));
 #pragma pack()
     typedef struct {
@@ -120,6 +121,7 @@ TEST_F(FunctionsTest, TestGetStatistics) {
         uint16_t errors;
         uint16_t trans_errors;
         uint16_t ack_to;
+        uint16_t validation_errors;
     } tRFStatResponse;
     ASSERT_EQ(sizeof(tRFStatResponse), this->response.length);
 //    tRFStatResponse *parsedResponse = reinterpret_cast<tRFStatResponse *>(&(response.data));
@@ -128,6 +130,7 @@ TEST_F(FunctionsTest, TestGetStatistics) {
     EXPECT_EQ(error_responses, *reinterpret_cast<uint16_t*>(this->response.data+4));
     EXPECT_EQ(missed_packets, *reinterpret_cast<uint16_t*>(this->response.data+6));
     EXPECT_EQ(ack_timeouts, *reinterpret_cast<uint16_t*>(this->response.data+8));
+    EXPECT_EQ(validation_errors, *reinterpret_cast<uint16_t*>(this->response.data+10));
 }
 
 TEST_F(FunctionsTest, TestGetPropertiesOfUnit) {
