@@ -134,12 +134,6 @@ void dataTransmitted(sString *address, sString *payload) {
         missed_packets++;
         return;
     }
-	//rfPacketsSent++;
-	/*if (0x80 > lastSentPacketStatus) {
-		ok_responses++;
-	} else {
-		error_responses++;
-	}*/
 	request->type = eptAckOk;
 	request->payloadLength = 0;
     memcpy(&(request->address), address->data, MAC_SIZE);
