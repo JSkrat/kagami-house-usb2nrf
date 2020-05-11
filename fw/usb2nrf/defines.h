@@ -46,6 +46,7 @@
 #define SLAVE_RESPONSE_TIMEOUT_MS 20
 
 #define portTransiever PORTB
+#define PORT_IN_TRANSIEVER PINB
 #define poTransiever_IRQ PORTB0
 
 /** RF packet **/

@@ -48,7 +48,7 @@ void nRF_init() {
 
 ISR(PCINT0_vect) {
 	// pin change, but we need only falling  edge
-	if (portTransiever & (1 << poTransiever_IRQ)) return;
+	if (PORT_IN_TRANSIEVER & (1 << poTransiever_IRQ)) return;
 	// The IRQ pin is activated when TX_DS IRQ, RX_DR IRQ or MAX_RT IRQ are set high
 	// by the state machine in the STATUS register
 	set_low(rfTransiever->ce);
