@@ -128,6 +128,7 @@ void nRF_listen(const uint8_t *address) {
 }
 
 void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
+	// without CE changing from low to high transmission won't start
 	set_low(rfTransiever->ce);
 	_delay_us(10);
 	// @todo optimize the library to avoid unnecessary copying here
