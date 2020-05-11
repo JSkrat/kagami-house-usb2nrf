@@ -59,7 +59,11 @@ protected:
 TEST_F(ProtocolTest, TestProtocolVersion) {
     for (int i = 0; i < 256; i++) {
         RQ->rqVersion = static_cast<uint8_t>(i);
+        this->responseLength = 0;
         generateResponse(REQUEST_HEADER_SIZE, this->request, &this->responseLength, this->response);
+        ASSERT_GE(this->responseLength, RESPONSE_HEADER_SIZE)
+                << "incorrect response length for request protocol version "
+                << i;
         if (PROTOCOL_VERSION == i)
             ASSERT_EQ(ercOk, RS->rsCode) << "not ok response code for correct protocol version";
         else
@@ -71,8 +75,18 @@ TEST_F(ProtocolTest, TestProtocolVersion) {
 TEST_F(ProtocolTest, TestRequestLength) {
     // build a correct request, but wrong length
     for (uint8_t i = 0; i < REQUEST_HEADER_SIZE; i++) {
+        this->responseLength = 0;
         generateResponse(i, this->request, &this->responseLength, this->response);
+        ASSERT_GE(this->responseLength, RESPONSE_HEADER_SIZE) << "wrong response length for short correct request";
         ASSERT_EQ(ercBadRequestData, RS->rsCode) << "wrong result code for request length " << i;
+    }
+    // incorrect request with incorrect length
+    for (int v = 0;  v < 256; v++) {
+        RQ->rqVersion = static_cast<uint8_t>(v);
+        this->responseLength = 0;
+        generateResponse(1, this->request, &this->responseLength, this->response);
+        ASSERT_GE(this->responseLength, RESPONSE_HEADER_SIZE) << "wrong response length for 1 byte long request";
+        ASSERT_EQ(ercBadRequestData, RS->rsCode);
     }
 }
 
@@ -81,7 +95,9 @@ TEST_F(ProtocolTest, TestTransactionId) {
         RQ->rqVersion = PROTOCOL_VERSION;
         RQ->rqTransactionId = static_cast<uint8_t>(i);
         RQ->rqFunctionId = eFNOP;
+        this->responseLength = 0;
         generateResponse(REQUEST_HEADER_SIZE, this->request, &this->responseLength, this->response);
+//        ASSERT_
         ASSERT_EQ(ercOk, RS->rsCode) << "not ok response " << this->returnCodes.at(RS->rsCode)
                                      << "at transaction id " << i;
         ASSERT_EQ(i, RS->rsTransactionId) << "transaction id not equal to given one for correct request"

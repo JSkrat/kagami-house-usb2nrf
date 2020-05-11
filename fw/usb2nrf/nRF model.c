@@ -19,6 +19,11 @@
 
 nRF24L01 *rfTransiever;
 fNRFCallback cNRF_DataTransmitted = NULL, cNRF_DataReceived = NULL, cNRF_TransmissionFailed = NULL;
+bool receivedDataPresent();
+
+inline static void set_low(gpio_pin pin) {
+	*pin.port &= ~_BV(pin.pin);
+}
 
 void nRF_init() {
 	// nrf24l01
@@ -46,6 +51,7 @@ ISR(PCINT0_vect) {
 	if (portTransiever & (1 << poTransiever_IRQ)) return;
 	// The IRQ pin is activated when TX_DS IRQ, RX_DR IRQ or MAX_RT IRQ are set high
 	// by the state machine in the STATUS register
+	set_low(rfTransiever->ce);
 	nRF24L01_update_status(rfTransiever);
 	uint8_t addressBytes[MAC_SIZE];
 	sString address = {MAC_SIZE, &addressBytes[0]};
@@ -53,20 +59,20 @@ ISR(PCINT0_vect) {
 		// Data Sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated,
 		// this bit is set high only when ACK is received.
 		nRF24L01_read_register(rfTransiever, TX_ADDR, address.data, MAC_SIZE);
-		/// @todo there instead of NULL should be ack payload, if there is any
-		if (cNRF_DataTransmitted) (*cNRF_DataTransmitted)(&address, NULL);
 		uint8_t data = _BV(TX_DS);
 		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+		/// @todo there instead of NULL should be ack payload, if there is any
+		if (cNRF_DataTransmitted) (*cNRF_DataTransmitted)(&address, NULL);
 	}
 	if (rfTransiever->status & _BV(MAX_RT)) {
 		// Maximum number of TX retransmits interrupt
 		// If MAX_RT is asserted it must be cleared to enable further communication.
 		nRF24L01_read_register(rfTransiever, TX_ADDR, address.data, MAC_SIZE);
-		if (cNRF_TransmissionFailed) (*cNRF_TransmissionFailed)(&address, NULL);
-		uint8_t data = _BV(MAX_RT);
 		// TX FIFO does not pop failed element, if we won't clean it, it will be re-sent again
 		nRF24L01_flush_transmit_message(rfTransiever);
+		uint8_t data = _BV(MAX_RT);
 		nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+		if (cNRF_TransmissionFailed) (*cNRF_TransmissionFailed)(&address, NULL);
 	}
 	if (rfTransiever->status & _BV(RX_DR)) {
 		// Data Ready RX FIFO interrupt. Asserted when new data arrives RX FIFO
@@ -83,12 +89,13 @@ ISR(PCINT0_vect) {
 			payload.length = msg.length;
 			memcpy(payload.data, &(msg.data), msg.length);
 			// read pipe 1 address first, so if it is 2-5 we could overwrite last byte to make correct address
-			nRF24L01_read_register(rfTransiever, RX_ADDR_P1, address.data, MAC_SIZE);
+			//if (0 != msg.pipe_number) nRF24L01_read_register(rfTransiever, RX_ADDR_P1, address.data, MAC_SIZE);
 			switch (msg.pipe_number) {
 				case 0: {
 					nRF24L01_read_register(rfTransiever, RX_ADDR_P0, address.data, MAC_SIZE);
 					break;
 				}
+				nRF24L01_read_register(rfTransiever, RX_ADDR_P1, address.data, MAC_SIZE);
 				// pipe 1 address is already pre-filled, so do nothing
 				case 1: break;
 				// overwrite last byte of address
@@ -100,10 +107,10 @@ ISR(PCINT0_vect) {
 					break;
 				}
 			}
-			if (cNRF_DataReceived) (cNRF_DataReceived)(&address, &payload);
 			uint8_t data = _BV(RX_DR);
 			nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
-		} while (nRF24L01_data_received(rfTransiever));
+			if (cNRF_DataReceived) (cNRF_DataReceived)(&address, &payload);
+		} while (receivedDataPresent());
 	}
 
 	//checkTransieverRXBuf(/*true*/);
@@ -120,4 +127,9 @@ void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
 	msg.length = length;
 	memcpy(&(msg.data), data, length);
 	nRF24L01_transmit(rfTransiever, address, &msg);
+}
+
+bool receivedDataPresent() {
+	nRF24L01_update_status(rfTransiever);
+	return nRF24L01_pipe_number_received(rfTransiever) >= 0;
 }
