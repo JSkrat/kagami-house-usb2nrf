@@ -161,7 +161,7 @@ void MainWindow::serialResponse(const uint8_t command, const uint8_t code, const
                 v <<= 8;
                 v += i;
             }
-            version = QString::number(v);
+            version = QString::number(v, 16);
         } else version = QString("(version error 0x%1)").arg(code, 2, 16, QChar('0'));
         this->setWindowTitle(QString("%1 — build %2").arg(this->title).arg(version));
         this->serialTransaction(QByteArray(1, mcStatus));
