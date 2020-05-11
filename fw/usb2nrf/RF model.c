@@ -146,6 +146,7 @@ void dataTransmitted(sString *address, sString *payload) {
 		error_responses++;
 	}*/
 	request->type = eptAckOk;
+	request->payloadLength = 0;
     memcpy(&(request->address), address->data, MAC_SIZE);
 	switch (RFMode) {
 		default:
@@ -177,6 +178,7 @@ void transmissionFailed(sString *address, sString *payload) {
         return;
     }
 	request->type = eptAckTimeout;
+	request->payloadLength = 0;
 	ack_timeouts++;
 	switch (RFMode) {
 		default:
@@ -202,6 +204,7 @@ void responseTimeoutEvent() {
         return;
     }
 	packet->type = eptResponseTimeout;
+	packet->payloadLength = 0;
 	memcpy(&(packet->address), ListenAddress, MAC_SIZE);
 }
 
