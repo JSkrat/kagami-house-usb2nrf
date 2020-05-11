@@ -17,6 +17,7 @@
 #include <string.h> // for NULL
 #include <stddef.h> // for offsetof
 #include "../usb2nrf/RF protocol internal.h"
+#include "../usb2nrf/RF info.h"
 
 
 //static enum eResponseCodes lastSentPacketStatus;
@@ -75,12 +76,19 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 				&responseArg
 			);
 			*responseLength += responseArg.length;
+			// update statistics
+            if (0x80 > RESPONSE_DATA->rsCode) ok_responses++;
+			else error_responses++;
 			break;
 		}
 		/*case ercNotConsecutiveTransactionId: {
+			missed_packets++;
 			RESPONSE_DATA->rsData[0] = lastTransacrionId;
 		}*/
-		default: break;
+		default: {
+			validation_errors++;
+			break;
+		}
 	}
 }
 
