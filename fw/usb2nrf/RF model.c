@@ -246,6 +246,7 @@ void setListenAddress(t_address *address) {
 }
 
 void RFTransmit(tRfPacket *packet) {
+	// save the address so we could listen that address after request is sent
 	memcpy(ListenAddress, packet->address, MAC_SIZE);
 	nRF_transmit((uint8_t*)&(packet->address), packet->payloadLength, (uint8_t*)&(packet->payloadData));
 };
