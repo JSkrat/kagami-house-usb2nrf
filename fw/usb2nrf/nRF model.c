@@ -44,6 +44,9 @@ void nRF_init() {
 	nRF24L01_begin(rfTransiever);
 	// 1Mbps, max power
 	wr = 3 << RF_PWR; nRF24L01_write_register(rfTransiever, RF_SETUP, &wr, 1);
+	// enable pipe 0 receive (ACK won't get to us without that)
+	uint8_t current_pipes = _BV(0);
+	nRF24L01_write_register(rfTransiever, EN_RXADDR, &current_pipes, 1);
 }
 
 ISR(PCINT0_vect) {
@@ -117,10 +120,15 @@ ISR(PCINT0_vect) {
 }
 
 void nRF_listen(const uint8_t *address) {
+	uint8_t config;
+	nRF24L01_read_register(rfTransiever, CONFIG, &config, 1);
+    config |= _BV(PRIM_RX);
+    nRF24L01_write_register(rfTransiever, CONFIG, &config, 1);
 	nRF24L01_listen(rfTransiever, 0, (uint8_t *)address);
 }
 
 void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
+	set_low(rfTransiever->ce);
 	_delay_us(10);
 	// @todo optimize the library to avoid unnecessary copying here
 	nRF24L01Message msg;
@@ -132,4 +140,8 @@ void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data) {
 bool receivedDataPresent() {
 	nRF24L01_update_status(rfTransiever);
 	return nRF24L01_pipe_number_received(rfTransiever) >= 0;
+}
+
+void nRF_go_idle() {
+	set_low(rfTransiever->ce);
 }

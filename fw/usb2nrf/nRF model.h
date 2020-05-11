@@ -26,5 +26,6 @@ extern fNRFCallback cNRF_DataTransmitted, cNRF_DataReceived, cNRF_TransmissionFa
 void nRF_init();
 void nRF_listen(const uint8_t *address);
 void nRF_transmit(uint8_t *address, uint8_t length, uint8_t *data);
+void nRF_go_idle();
 
 #endif /* NRF_MODEL_H_ */
