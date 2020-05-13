@@ -26,7 +26,8 @@ void msEvent(void);
 
 static eRFMode RFMode;
 static t_address ListenAddress;
-static int responseTimeout = -1; // negative value means it is disabled, event triggered when it becomes disabled
+static uint8_t RFChannel;
+static int responseTimeout; // negative value means it is disabled, event triggered when it becomes disabled
 
 #define RFBUFFER_SIZE 8
 static tRfPacket RFBuffer[RFBUFFER_SIZE];
@@ -48,6 +49,14 @@ void rf_init() {
 	cNRF_DataReceived = &dataReceived;
 	cNRF_DataTransmitted = &dataTransmitted;
 	cNRF_TransmissionFailed = &transmissionFailed;
+	RFMode = rmIdle;
+	responseTimeout = -1;
+	RFChannel = 2; // the default one for nrf24l01
+	protocolInit();
+	// reset buffer
+	rfbBegin = 0; rfbEnd = 0; rfbSize = 0;
+	init_rf_info();
+	// TODO if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 #ifndef UNIT_TESTING
 	// now let's setup timer
 	TCCR0A = (1 << WGM01) | (0 << WGM00); // CTC mode
@@ -55,13 +64,6 @@ void rf_init() {
 	OCR0A = 250; // compare match interrupt every millisecond
 	TIMSK0 = (1 << OCIE0A);
 #endif
-	RFMode = rmIdle;
-	responseTimeout = -1;
-	protocolInit();
-	// reset buffer
-	rfbBegin = 0; rfbEnd = 0; rfbSize = 0;
-	init_rf_info();
-	// TODO if we init in slave mode, we need to send "turn on" packet to master and make sure master received it
 }
 
 /**
@@ -150,6 +152,7 @@ void dataTransmitted(sString *address, sString *payload) {
 		}
 		case rmSlave: {
 			// ack can be only for our response, so we know here transaction is done, we're back in listen state
+			nRF_setRFChannel(RFChannel);
 			RFListen((uint8_t*) &ListenAddress);
 			// pop out pushed to rf buffer packet, no one is gonna read it
 			nextRFBufferElement();
@@ -178,6 +181,7 @@ void transmissionFailed(sString *address, sString *payload) {
 		}
 		case rmSlave: {
 			// transiever should be set up in such a way, that if it timeouted, it is ok, we just give up.
+			nRF_setRFChannel(RFChannel);
 			RFListen((uint8_t*) &ListenAddress);
 			nextRFBufferElement();
 			ack_timeouts++;
@@ -218,6 +222,7 @@ eRFMode switchRFMode(eRFMode newMode) {
 		}
 		case rmSlave: {
 			// start listen here
+			nRF_setRFChannel(RFChannel);
 			RFListen((uint8_t*)&ListenAddress);
 			break;
 		}
@@ -244,3 +249,25 @@ void RFTransmit(tRfPacket *packet) {
 	memcpy(ListenAddress, packet->address, MAC_SIZE);
 	nRF_transmit((uint8_t*)&(packet->address), packet->payloadLength, (uint8_t*)&(packet->payloadData));
 };
+
+bool RFSetChannel(uint8_t channel) {
+	switch (RFMode) {
+		default:
+		case rmIdle:
+		case rmMaster: {
+			if (nRF_setRFChannel(channel)) {
+				RFChannel = channel;
+				return true;
+			}
+			break;
+		}
+		case rmSlave: {
+			if (nRF_validate_rf_channel(channel)) {
+				RFChannel = channel;
+				return true;
+			}
+			break;
+		}
+	}
+	return false;
+}

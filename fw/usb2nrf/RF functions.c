@@ -76,6 +76,12 @@ uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString 
 	return ercOk;
 }
 
+uint8_t rfSetRFChannel(const uint8_t unit, const scString *request, sString *response) {
+	(void) unit;
+	
+	return ercOk;
+}
+
 uint8_t rfNOP(const uint8_t unit, const scString *request, sString *response) {
 	(void) unit;
 	(void) request;
@@ -236,6 +242,7 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
 	[eFGetStatistics] = &getStatistics,
     [eFResetTransactionId] = &resetTransactionId,
 	[eFNOP] = &rfNOP,
+	[eFSetRFChannel] = &rfSetRFChannel,
 	
 	[eFGetPropertiesOfUnit] = &getPropertiesOfUnit,
 	[eFGetTextDescription] = &getTextDescription,
