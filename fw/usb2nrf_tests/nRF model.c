@@ -109,3 +109,13 @@ void nRF_go_idle()
 {
 
 }
+
+bool nRF_validate_rf_channel(uint8_t channel)
+{
+
+}
+
+bool nRF_setRFChannel(uint8_t channel)
+{
+
+}
