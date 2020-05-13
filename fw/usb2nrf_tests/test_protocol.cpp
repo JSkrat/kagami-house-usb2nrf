@@ -125,7 +125,7 @@ TEST_F(ProtocolTest, TestUnitFunctionIds) {
                     // may return absolutely anything, except those two codes at least
                     EXPECT_NE(ercBadUnitId, RS->rsCode) << "response BadUnitId for existent unit " << unit << " correct function " << function;
                     // hardcoded check for valid function numbers
-                    if (5 >= function || (0x10 <= function && 0x12 >= function) || (0x20 <= function && 0x21 >= function))
+                    if (6 >= function || (0x10 <= function && 0x12 >= function) || (0x20 <= function && 0x21 >= function))
                         EXPECT_NE(ercBadFunctionId, RS->rsCode) << "response BadFunctionId for existent unit " << unit
                                                                 << " correct function " << function;
                     else
