@@ -30,7 +30,6 @@ typedef struct {
 	uint8_t rqVersion;
 	uint8_t rqTransactionId;
 	uint8_t rqUnitId;
-	uint8_t rqNextChannel;
 	uint8_t rqFunctionId;
 	uint8_t rqData[];
 } sRequest;
