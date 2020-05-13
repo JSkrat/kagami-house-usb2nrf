@@ -149,3 +149,16 @@ bool receivedDataPresent() {
 void nRF_go_idle() {
 	set_low(rfTransiever->ce);
 }
+
+bool nRF_validate_rf_channel(uint8_t channel) {
+	return channel < 128;
+}
+
+bool nRF_setRFChannel(uint8_t channel) {
+	if (nRF_validate_rf_channel(channel)) {
+		nRF24L01_write_register(rfTransiever, RF_CH, &channel, 1);
+		return true;
+	} else {
+		return false;
+	}
+}

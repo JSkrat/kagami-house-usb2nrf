@@ -57,6 +57,7 @@ void transmitPacket(tRfPacket *packet);
 void nRF_listen(const uint8_t *address);
 #define RFListen(address) nRF_listen(address)
 void RFTransmit(tRfPacket *packet);
+bool RFSetChannel(uint8_t channel);
 
 
 eRFMode switchRFMode(eRFMode newMode);
