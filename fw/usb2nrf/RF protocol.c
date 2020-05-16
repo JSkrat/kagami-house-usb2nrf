@@ -4,6 +4,7 @@
  * Created: 01.03.2020 22:24:02
  *  Author: Mintytail
  */ 
+#if BT_SLAVE == BUILD_TYPE
 
 #include "../usb2nrf/RF protocol.h"
 #include "../usb2nrf/RF functions.h"
@@ -95,3 +96,5 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 void protocolInit() {
 	lastTransacrionId = 0;
 }
+
+#endif

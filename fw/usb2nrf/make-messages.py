@@ -83,7 +83,12 @@ typedef struct {
 //#ifndef UNIT_TESTING
 ''')
 
-c_output.write('#include "messages.h"\n\n')
+c_output.write('''
+#include "messages.h"
+
+#if BT_DEBUG == BUILD_TYPE
+
+''')
 
 for line in open(argv[1], 'r'):
   key_value = line.strip("\n").split('=')
@@ -98,5 +103,6 @@ for line in open(argv[1], 'r'):
 
 h_output.write('\n//#endif');
 h_output.write('\n#endif // ' + filename + '_H_INCLUDED\n');
+c_output.write('\n#endif // BUILD_TYPE\n')
 h_output.close()
 c_output.close()

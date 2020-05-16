@@ -4,6 +4,7 @@
  * Created: 01.01.2020 14:54:34
  *  Author: Mintytail
  */ 
+#if BT_SLAVE == BUILD_TYPE
 
 #include "../usb2nrf/RF functions.h"
 #include "../usb2nrf/RF protocol.h"
@@ -253,3 +254,5 @@ const PROGMEM fRFFunction RFFunctions[_eFCount] = {
     [eFReadUnitChannels] = &readUnitChannel,
     [eFWriteUnitChannels] = &writeUnitChannel,
 };
+
+#endif

@@ -301,4 +301,5 @@ void lcdClear() {
         LCD_write_byte(0, 1);
     }
 }
-#endif
+
+#endif // USE_LCD

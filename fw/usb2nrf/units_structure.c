@@ -4,6 +4,8 @@
  * Created: 09.02.2020 16:35:19
  *  Author: Mintytail
  */ 
+#if BT_SLAVE == BUILD_TYPE
+
 #include "units_structure.h"
 #include "RF protocol.h"
 
@@ -78,3 +80,5 @@ const sUnit units[UNITS_LENGTH] PROGMEM = {
 		.channelsRW = &outputChannels[2]
 	}
 };
+
+#endif

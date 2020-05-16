@@ -4,6 +4,8 @@
  * Created: 13.04.2020 22:07:48
  *  Author: Mintytail
  */ 
+#if BT_MASTER == BUILD_TYPE || BT_DEBUG == BUILD_TYPE
+
 #include "UART functions.h"
 #include "sstring.h"
 #include "UART protocol.h"
@@ -88,20 +90,22 @@ uint8_t uListen(const scString *request, sString *response) {
 }
 
 uint8_t uSetMode(const scString *request, sString *response) {
-	response->length = 1;
-	eRFMode setMode = request->data[0];
-	eRFMode newMode = switchRFMode(setMode);
-	response->data[0] = newMode;
-	if (setMode == newMode) {
-		return eucOk;
-	} else {
-		return eucGeneralFail;
-	}
+	return eucNotImplemented;
+	//response->length = 1;
+	//eRFMode setMode = request->data[0];
+	//eRFMode newMode = switchRFMode(setMode);
+	//response->data[0] = newMode;
+	//if (setMode == newMode) {
+	//	return eucOk;
+	//} else {
+	//	return eucGeneralFail;
+	//}
 }
 
 uint8_t uSetListenAddress(const scString *request, sString *response) {
-	setListenAddress((t_address *) request->data);
-	return eucOk;
+	return eucNotImplemented;
+	//setListenAddress((t_address *) request->data);
+	//return eucOk;
 }
 
 uint8_t readRFBuffer(const scString *request, sString *response) {
@@ -130,7 +134,6 @@ uint8_t uTransmit(const scString *request, sString *response) {
 	if (MAC_SIZE > request->length) {
 		return eucArgumentValidationError;
 	}
-	//checkTransieverRXBuf();
 	tRfPacket packet;
 	memcpy(packet.address, request->data, MAC_SIZE);
 	packet.payloadLength = request->length - MAC_SIZE;
@@ -166,3 +169,5 @@ const PROGMEM tUARTCommandItem UARTFunctions[UART_FUNCTIONS_NUMBER] = {
 
     { mcEcho, NULL },
 };
+
+#endif

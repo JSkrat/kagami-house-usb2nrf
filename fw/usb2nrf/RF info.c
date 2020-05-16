@@ -4,6 +4,8 @@
  * Created: 20.04.2020 21:38:18
  *  Author: Mintytail
  */ 
+#if BT_SLAVE == BUILD_TYPE
+
 #include "RF info.h"
 #include <stdint.h>
 
@@ -18,3 +20,5 @@ void init_rf_info() {
 	ack_timeouts = 0;
 	validation_errors = 0;
 }
+
+#endif

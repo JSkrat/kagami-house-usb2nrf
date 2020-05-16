@@ -1,6 +1,7 @@
 #include "my-stdlib.h"
-//#include "main.h"
 #include "messages.h"
+
+#ifdef USE_MY_STDLIB
 
 union {
 	uint8_t bytes[8];
@@ -59,4 +60,4 @@ string* Hex16(uint16_t value) {
     return &(strBuf.str);
 }
 
-
+#endif

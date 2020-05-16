@@ -4,6 +4,7 @@
  * Created: 19.04.2020 20:57:19
  *  Author: Mintytail
  */ 
+#if BT_MASTER == BUILD_TYPE || BT_DEBUG == BUILD_TYPE
 
 #include "UART protocol.h"
 #include "UART functions.h"
@@ -68,7 +69,6 @@ void UARTGenerateResponse(const uPackage *request, uPackage *response) {
 
 void UARTBeginTransaction() {
 	state = usProtoVer;
-	ui_subsystem_str(ui_s_uart_packet_fsm, &m_usProtoVer, true);
 }
 
 bool UARTProcessNextByte(uint8_t b, uPackage *response) {
@@ -77,16 +77,13 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
             break;
         }
 		case usError: {
-			//ui_subsystem_str(ui_s_uart_packet_fsm, &m_usError, true);
             break;
 		}
 		case usProtoVer: {
 			if (uPPProtoVer == b) {
 				state = usCommand;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usCommand, true);
             } else {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorProto, true);
                 UARTGenerateErrorResponse(eucBadVersion, response);
                 return true;
 			}
@@ -95,20 +92,17 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 		case usCommand: {
 			if (0x80 & b) {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorCmd, true);
                 UARTGenerateErrorResponse(eucBadCommand, response);
                 return true;
             } else {
 				reqBuffer.pkg.command = b;
                 state = usPDataLength;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usPDataLength, true);
 			}
 			break;
 		}
 		case usPDataLength: {
 			if (PAYLOAD_SIZE + MAC_SIZE <= b) {
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usErrorLength, true);
                 UARTGenerateErrorResponse(eucMemoryError, response);
                 return true;
 			}
@@ -117,12 +111,10 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 			if (0 == b) {
 				// there won't be any bytes from that package anymore
 				state = usError;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usEnd, true);
 				UARTGenerateResponse(&reqBuffer, response);
 				return true;
 			} else {
 				state = usPData;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usPData, true);
 			}
 			break;
 		}
@@ -131,7 +123,6 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 			if (reqBuffer.pkg.payloadSize <= position) {
 				// that's all payload, no bytes from that package left
                 state = usEnd;
-				ui_subsystem_str(ui_s_uart_packet_fsm, &m_usEnd, true);
 				UARTGenerateResponse(&reqBuffer, response);
 				return true;
 			}
@@ -143,5 +134,6 @@ bool UARTProcessNextByte(uint8_t b, uPackage *response) {
 
 void UARTProtocolInit() {
 	state = usError;
-	ui_subsystem_str(ui_s_uart_packet_fsm, &m_usNotInit, true);
 }
+
+#endif

@@ -4,6 +4,8 @@
  * Created: 13.01.2019 16:25:04
  *  Author: J-sama
  */ 
+#if BT_MASTER == BUILD_TYPE || BT_DEBUG == BUILD_TYPE
+
 #include "UART parser.h"
 #include "UART protocol.h"
 #include "defines.h"
@@ -135,3 +137,5 @@ void parse(unsigned char b) {
 		uSendPacket(&respBuffer);
 	}	
 }
+
+#endif

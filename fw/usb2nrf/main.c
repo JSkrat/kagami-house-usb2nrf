@@ -26,7 +26,9 @@ int main(void)
 {
 	/* hardware initialization */
 	ui_init();
+#if BT_MASTER == BUILD_TYPE
 	u_init();
+#endif
 	rf_init();
 	
 	set_sleep_mode(SLEEP_MODE_IDLE);
