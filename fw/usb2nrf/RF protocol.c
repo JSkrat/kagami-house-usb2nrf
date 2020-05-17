@@ -102,7 +102,7 @@ void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData) {
 		.data = &(DATA->rsData[0])
 	};
 	DATA->rsVersion = PROTOCOL_VERSION;
-	DATA->rsTransactionId = 0;
+	DATA->rsTransactionId = 0xAA;
 	DATA->rsCode = (*method)(0, NULL, &responseArg);
 	*packetLength = 3 + responseArg.length;
 	#undef DATA

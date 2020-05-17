@@ -101,9 +101,10 @@ void transmissionFailed(sString *address, sString *payload) {
 
 static void responseTimeoutEvent() {
 	// no response from the requested master, repeat request
-	tRfPacket adv;
-	generateAdvertisement(&(adv.payloadLength), (uint8_t*) &(adv.payloadData[0]));
-	nRF_transmit((uint8_t*)&(ListenAddress), adv.payloadLength, &(adv.payloadData[0]));
+	uint8_t data[32];
+	uint8_t length;
+	generateAdvertisement(&(length), &data[0]);
+	nRF_transmit((uint8_t*)&(ListenAddress), length, &data[0]);
 }
 
 void setListenAddress(t_address *address) {
