@@ -57,13 +57,12 @@ void dataReceived(sString *address, sString *payload) {
 	// event, one per received packet
 	total_requests++;
 	// in slave mode we need to respond to that packet and listen again
-	tRfPacket response;
-	// copy address
-	memcpy(&response.address, address->data, sizeof(t_address));
+	uint8_t responseData[32];
+	uint8_t responseLength;
 	// minimum response size if 3 bytes: version, transaction id, response code
 	// data is the last field, so its starting is minimal length of the packet
-	generateResponse(payload->length, payload->data, &(response.payloadLength), (uint8_t*) &(response.payloadData));
-	nRF_transmit((uint8_t*)&(response.address), response.payloadLength, &(response.payloadData[0]));
+	generateResponse(payload->length, payload->data, &(responseLength), &(responseData[0]));
+	nRF_transmit(address->data, responseLength, &(responseData[0]));
 	// after that we're waiting for either ack from master or ack timeout
 }
 
@@ -108,7 +107,8 @@ static void responseTimeoutEvent() {
 }
 
 void setListenAddress(t_address *address) {
-	// write address and re-listen if we're slave
+	saveSettings(esAddress, address);
+	// write address and re-listen
 	memcpy(ListenAddress, *address, MAC_SIZE);
 	nRF_setRFChannel(RFChannel);
 	RFListen((uint8_t*) &ListenAddress);
@@ -117,6 +117,7 @@ void setListenAddress(t_address *address) {
 void switchMode(eModeType newMode) {
 	if (emNone == newMode || emAmount <= newMode) eMode = emSearchMaster;
 	else eMode = newMode;
+	saveSettings(esMode, &eMode);
 	switch (eMode) {
 		case emNormalSlave: {
 			responseTimeout = -1;
