@@ -29,8 +29,16 @@ typedef enum {
 	rmIdle = 0,
 	rmSlave = 1,
 	rmMaster = 2,
-	rmGetMode, // should be the last, we check for validity by mode being numerically less than that value
+	rmGetMode // should be the last, we check for validity by mode being numerically less than that value
 } eRFMode;
+
+typedef enum {
+	emNone = 0,
+	emSearchMaster = 1,
+	emNormalSlave = 2,
+	// for validation
+	emAmount
+} eModeType;
 
 //extern const eRFMode RFMode;
 //extern t_address MasterAddress;
@@ -61,6 +69,7 @@ bool RFSetChannel(uint8_t channel);
 
 
 eRFMode switchRFMode(eRFMode newMode);
+void switchMode(eModeType newMode);
 void setListenAddress(t_address *address);
 tRfPacket* nextRFBufferElement();
 

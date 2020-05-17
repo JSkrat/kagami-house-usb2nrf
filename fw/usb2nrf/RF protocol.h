@@ -109,6 +109,7 @@ typedef struct {
 } sUnit;
 
 void generateResponse(const uint8_t requestLength, const uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData);
+void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData);
 void protocolInit();
 
 #ifdef UNIT_TESTING

@@ -9,14 +9,18 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
+#include <stdint.h>
+
 typedef enum {
 	esKey,
 	esAddress,
 	esChannel,
+	esMode,
 	// for validation only
 	esAmount
 } eSetting;
 
-
+uint8_t readSetting(eSetting type, void *output);
+uint8_t saveSettings(eSetting type, const void *data);
 
 #endif /* SETTINGS_H_ */

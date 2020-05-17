@@ -20,6 +20,7 @@ typedef enum {
     eFResetTransactionId = 4,
 	eFNOP = 5,
 	eFSetRFChannel = 6,
+	eFSetMode = 7,
 	
 	eFGetPropertiesOfUnit = 0x10,
 	eFGetTextDescription = 0x11,

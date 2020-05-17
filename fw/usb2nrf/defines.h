@@ -44,6 +44,7 @@
 #define MAC_SIZE 5
 #define PAYLOAD_SIZE 32
 #define SLAVE_RESPONSE_TIMEOUT_MS 20
+#define SLAVE_REQUEST_TIMEOUT_MS 500
 
 #define portTransiever PORTB
 #define PORT_IN_TRANSIEVER PINB

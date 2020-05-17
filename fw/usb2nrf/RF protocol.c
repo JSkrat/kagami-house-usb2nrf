@@ -28,7 +28,7 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 	// first lets check the packet minimum length
 	if (offsetof(sRequest, rqData) > length) return ercBadRequestData;
 	// check the contents
-	if (0 != data->rqVersion) return ercBadVersion;
+	if (PROTOCOL_VERSION != data->rqVersion) return ercBadVersion;
 	/*if (lastTransacrionId+1 != data->rqTransactionId) {
 		// do not check transaction id if it is reset transaction id
 		if (eFResetTransactionId != data->rqFunctionId)
@@ -50,7 +50,6 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	// response should be already allocated for that function
 	#define REQUEST_DATA ((const sRequest*) requestData)
 	#define RESPONSE_DATA ((sResponse*) responseData)
-	//using requestData = sRequest*;
 	enum eResponseCodes validation = validatePacket(requestLength, REQUEST_DATA);
 	RESPONSE_DATA->rsVersion = PROTOCOL_VERSION;
 	RESPONSE_DATA->rsTransactionId = REQUEST_DATA->rqTransactionId;
@@ -91,6 +90,22 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 			break;
 		}
 	}
+	#undef RESPONSE_DATA
+	#undef REQUEST_DATA
+}
+
+void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData) {
+	#define DATA ((sResponse*) packetData)
+	fRFFunction method = (fRFFunction) pgm_read_ptr(&(RFFunctions[eFGetListOfUnits]));
+	sString responseArg = {
+		.length = 0,
+		.data = &(DATA->rsData[0])
+	};
+	DATA->rsVersion = PROTOCOL_VERSION;
+	DATA->rsTransactionId = 0;
+	DATA->rsCode = (*method)(0, NULL, &responseArg);
+	*packetLength = 3 + responseArg.length;
+	#undef DATA
 }
 
 void protocolInit() {

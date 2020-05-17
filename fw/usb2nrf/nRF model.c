@@ -19,6 +19,7 @@
 
 nRF24L01 *rfTransiever;
 fNRFCallback cNRF_DataTransmitted = NULL, cNRF_DataReceived = NULL, cNRF_TransmissionFailed = NULL;
+static uint8_t rf_channel;
 bool receivedDataPresent();
 
 inline static void set_low(gpio_pin pin) {
@@ -41,6 +42,8 @@ void nRF_init() {
 	// internal pull up resistor is 20k to 50k
 	PORTB |= _BV(rfTransiever->miso.pin);
 	rfTransiever->sck.port = &portTransiever; rfTransiever->sck.pin = PORTB5;
+	// init by invalid value to guarantee register update at first channel switch
+	rf_channel = 255;
 	nRF24L01_begin(rfTransiever);
 	// disable auto ack
 	wr = 0; nRF24L01_write_register(rfTransiever, EN_AA, &wr, 1);
@@ -156,7 +159,10 @@ bool nRF_validate_rf_channel(uint8_t channel) {
 
 bool nRF_setRFChannel(uint8_t channel) {
 	if (nRF_validate_rf_channel(channel)) {
-		nRF24L01_write_register(rfTransiever, RF_CH, &channel, 1);
+		if (rf_channel != channel) {
+			nRF24L01_write_register(rfTransiever, RF_CH, &channel, 1);
+			rf_channel = channel;
+		}
 		return true;
 	} else {
 		return false;

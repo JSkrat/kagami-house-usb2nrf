@@ -5,6 +5,7 @@
  *  Author: Mintytail
  */ 
 #if BT_MASTER == BUILD_TYPE || defined UNIT_TESTING
+
 #include "../usb2nrf/RF model.h"
 #ifndef UNIT_TESTING
 	#include <avr/interrupt.h>

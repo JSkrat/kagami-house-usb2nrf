@@ -8,6 +8,7 @@
 #include "../usb2nrf/nRF model.h"
 #ifndef UNIT_TESTING
     #include <avr/interrupt.h>
+	#include "Settings.h"
 #else
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
@@ -33,7 +34,7 @@ void rf_init() {
 	cNRF_DataTransmitted = &dataTransmitted;
 	cNRF_TransmissionFailed = &transmissionFailed;
 	//RFMode = rmIdle;
-	RFChannel = 2; // the default one for nrf24l01
+	readSetting(esChannel, &RFChannel);
 #if BT_MASTER == BUILD_TYPE
 	rf_master_init();
 #elif BT_SLAVE == BUILD_TYPE
