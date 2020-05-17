@@ -29,11 +29,15 @@ typedef enum {
     eFReadUnitChannels = 0x20,
     eFWriteUnitChannels = 0x21,
     eFReadSingleUnitChannel = 0x22,
-	// last item to get length of the array
-	_eFCount
 } eFunctions;
 
+typedef struct {
+	eFunctions functionCode;
+	fRFFunction function;
+} tRFCodeFunctionItem;
 
-extern const fRFFunction RFFunctions[_eFCount];
+//extern const fRFFunction RFFunctions[_eFCount];
+#define _eFCount 14
+extern const tRFCodeFunctionItem RFFunctions[_eFCount];
 
 #endif /* FUNCTIONS_H_ */

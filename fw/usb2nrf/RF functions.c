@@ -246,24 +246,24 @@ uint8_t writeUnitChannel(const uint8_t unit, const scString *request, sString *r
 	return ercOk;
 }
 
-const PROGMEM fRFFunction RFFunctions[_eFCount] = {
-	[eFSetSessionKey] = &setSessionKey,
-	[eFGetListOfUnits] = &getListOfUnits,
-	[eFSetAddress] = &setMACAddress,
-	[eFGetStatistics] = &getStatistics,
-    [eFResetTransactionId] = &resetTransactionId,
-	[eFNOP] = &rfNOP,
-	[eFSetRFChannel] = &rfSetRFChannel,
-	[eFSetMode] = &setMode,
+const PROGMEM tRFCodeFunctionItem RFFunctions[_eFCount] = {
+	{eFSetSessionKey, &setSessionKey},
+	{eFGetListOfUnits, &getListOfUnits},
+	{eFSetAddress, &setMACAddress},
+	{eFGetStatistics, &getStatistics},
+    {eFResetTransactionId, &resetTransactionId},
+	{eFNOP, &rfNOP},
+	{eFSetRFChannel, &rfSetRFChannel},
+	{eFSetMode, &setMode},
 	
-	[eFGetPropertiesOfUnit] = &getPropertiesOfUnit,
-	[eFGetTextDescription] = &getTextDescription,
-	[eFSetTextDescription] = &setTextDescription,
+	{eFGetPropertiesOfUnit, &getPropertiesOfUnit},
+	{eFGetTextDescription, &getTextDescription},
+	{eFSetTextDescription, &setTextDescription},
 	
-	//[eFReadSingleUnitChannel] = &_readSingleUnitChannel,
+	//{eFReadSingleUnitChannel, &_readSingleUnitChannel},
 	
-    [eFReadUnitChannels] = &readUnitChannel,
-    [eFWriteUnitChannels] = &writeUnitChannel,
+    {eFReadUnitChannels, &readUnitChannel},
+    {eFWriteUnitChannels, &writeUnitChannel},
 };
 
 #endif

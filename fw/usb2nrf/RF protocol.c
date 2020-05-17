@@ -42,8 +42,19 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 	if ((0 == data->rqUnitId) != (0x10 > data->rqFunctionId)) {
 		return ercBadFunctionId;
 	}
-	if (_eFCount <= data->rqFunctionId) return ercBadFunctionId;
+	//if (_eFCount <= data->rqFunctionId) return ercBadFunctionId;
 	return ercOk;
+}
+
+fRFFunction findFunctionByCode(eFunctions code) {
+	for (uint8_t i = 0; i < _eFCount; i++) {
+		const uint8_t iCode = pgm_read_byte(&(RFFunctions[i].functionCode));
+		if (iCode == code) {
+			fRFFunction iFunction = pgm_read_ptr(&(RFFunctions[i].function));
+			return iFunction;
+		}
+	}
+	return NULL;
 }
 
 void generateResponse(const uint8_t requestLength, const uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData) {
@@ -57,7 +68,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	*responseLength = 3; // length of the empty response, without any data
 	switch (validation) {
 		case ercOk: {
-            fRFFunction method = (fRFFunction) pgm_read_ptr(&(RFFunctions[REQUEST_DATA->rqFunctionId]));
+            fRFFunction method = findFunctionByCode(REQUEST_DATA->rqFunctionId);
 			if (NULL == method) {
 				RESPONSE_DATA->rsCode = ercBadFunctionId;
 				break;
@@ -96,7 +107,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 
 void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData) {
 	#define DATA ((sResponse*) packetData)
-	fRFFunction method = (fRFFunction) pgm_read_ptr(&(RFFunctions[eFGetListOfUnits]));
+	fRFFunction method = findFunctionByCode(eFGetListOfUnits);
 	sString responseArg = {
 		.length = 0,
 		.data = &(DATA->rsData[0])
