@@ -92,6 +92,12 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 			else error_responses++;
 			break;
 		}
+		// this is responsible for transaction integrity
+		// we will keep hash of the previous request and its response
+		// and if the new one is the same plus tid is current-1
+		// there will be repeat of the response, but tid will be new one anyway
+		// it can be repeated predefined number of tries, every time increasing tid
+		// after which we shall stop that and respond some special error code
 		/*case ercNotConsecutiveTransactionId: {
 			missed_packets++;
 			RESPONSE_DATA->rsData[0] = lastTransacrionId;

@@ -20,7 +20,6 @@
 
 #define PROTOCOL_VERSION 0
 
-
 // arguments are request and response
 // caller should allocate space for the response
 // unit (first argument) is guaranteed (by RF Parser) to be correct
@@ -63,50 +62,6 @@ enum eResponseCodes {
 
 	ercBadRequestData = 0xE0,
 };
-
-typedef enum {
-	eCDTBit = 0,
-	eCDTUnsigned = 1,
-	eCDTSigned = 2,
-	eCDTArray = 3,
-} eChannelDataType;
-
-// 3 bytes
-typedef struct s_channel {
-	eChannelDataType dataType;
-	union {
-		bool *tBit;
-		uint32_t *tUInt;
-		int32_t *tInt;
-		//string *tStr;
-	} value;
-} sChannel;
-
-typedef enum {
-	eUTSCustom = 0x00,
-	eUTSSwitch = 0x01,
-	eUTSAnalog = 0x02,
-	eUTSLast,
-	
-	eUTACustom = 0x40,
-	eUTARelay  = 0x41,
-	eUTAAnalog = 0x42,
-	eUTARGB    = 0x43,
-
-    eUTSystem  = 0x80,
-	eUTALast
-} eUnitType;
-
-// 10 bytes long
-typedef struct {
-	eUnitType type;
-	uint8_t channelsROLength;
-	const sChannel *channelsRO;
-	uint8_t channelsWOLength;
-	const sChannel *channelsWO;
-	uint8_t channelsRWLength;
-	const sChannel *channelsRW;
-} sUnit;
 
 void generateResponse(const uint8_t requestLength, const uint8_t *requestData, uint8_t *responseLength, uint8_t *responseData);
 void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData);
