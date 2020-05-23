@@ -117,7 +117,7 @@ uint8_t getPropertiesOfUnit(const uint8_t unit, const uint8_t function, const sc
 		list = RFU0Functions;
 	} else {
 		count = fUCount + RFUnits[unit-1].length;
-		list = RFUnits[unit-1].functions;
+		list = pgm_read_ptr(&RFUnits[unit-1].functions);
 	}
 	response->length = count*2;
 	for (int i = 0; i < count; i++) {
