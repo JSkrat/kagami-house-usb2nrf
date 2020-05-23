@@ -40,6 +40,11 @@
 #define poLED_D1 PORTD7
 #define poLED_D2 PORTD6
 
+/*** buttons ***/
+#define portButtons PORTD
+#define piSW1 PIND2
+#define piSW2 PIND3
+
 /*** transiever ***/
 #define MAC_SIZE 5
 #define PAYLOAD_SIZE 32

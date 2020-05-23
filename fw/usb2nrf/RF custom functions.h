@@ -14,7 +14,9 @@
 #define unitsCount 1
 extern const tUnit RFUnits[unitsCount];
 
-#define fU1Count 2
+#define fU1Count 4
 extern const tRFCodeFunctionItem U1Functions[fU1Count];
+
+void RFCustomFunctionsInit();
 
 #endif /* RF_CUSTOM_FUNCTIONS_H_ */
