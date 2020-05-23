@@ -9,12 +9,11 @@
 #include "../usb2nrf/RF functions.h"
 #include "../usb2nrf/RF protocol.h"
 #include "../usb2nrf/RF info.h"
+#include "../usb2nrf/RF custom functions.h"
 #ifndef UNIT_TESTING
-    #include "./units_structure.h"
     #include "./RF model.h"
     #include <avr/pgmspace.h>
 #else
-    #include "../usb2nrf_tests/units_structure.h"
     #include "../usb2nrf/RF model.h"
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
@@ -26,13 +25,6 @@
 #include "sstring.h"
 // if it is unit tests, it should be local file, not of main project one
 
-const uint8_t _dataTypeLength[] = {
-	[eCDTBit] = 1,
-	[eCDTUnsigned] = 4,
-	[eCDTSigned] = 4,
-	[eCDTArray] = 1,
-};
-
 uint8_t setSessionKey(const uint8_t unit, const scString *request, sString *response) {
 	// TODO after integrating cipher library
     (void) unit;
@@ -41,18 +33,11 @@ uint8_t setSessionKey(const uint8_t unit, const scString *request, sString *resp
 	return ercNotImplemented;
 }
 
-uint8_t getListOfUnits(const uint8_t unit, const scString *request, sString *response) {
+uint8_t getNumnberOfUnits(const uint8_t unit, const scString *request, sString *response) {
     (void) unit;
     (void) request;
-	response->length = 0 + 4*UNITS_LENGTH;
-	//response->data[0] = UNITS_LENGTH;
-	for (int i = 0; i < UNITS_LENGTH; i++) {
-		uint8_t base = 0 + 4*i;
-        response->data[base+0] = pgm_read_byte((const uint8_t*) &(units[i].type));
-        response->data[base+1] = pgm_read_byte((const uint8_t*) &(units[i].channelsROLength));
-        response->data[base+2] = pgm_read_byte((const uint8_t*) &(units[i].channelsWOLength));
-        response->data[base+3] = pgm_read_byte((const uint8_t*) &(units[i].channelsRWLength));
-	}
+	response->length = 1;
+	response->data[0] = unitsCount;
 	return ercOk;
 }
 
@@ -115,34 +100,23 @@ uint8_t getStatistics(const uint8_t unit, const scString *request, sString *resp
 }
 
 uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString *response) {
-    (void) request;
-	response->length = 13;
-    response->data[0] = pgm_read_byte((const uint8_t*) &(units[unit].type));
-    const uint8_t ro_num = pgm_read_byte(&(units[unit].channelsROLength));
-    const uint8_t wo_num = pgm_read_byte(&(units[unit].channelsWOLength));
-    const uint8_t rw_num = pgm_read_byte(&(units[unit].channelsRWLength));
-    const sChannel *ro_ch = pgm_read_ptr(&(units[unit].channelsRO));
-    const sChannel *wo_ch = pgm_read_ptr(&(units[unit].channelsWO));
-    const sChannel *rw_ch = pgm_read_ptr(&(units[unit].channelsRW));
-	for (int i = 0; i < 4; i++) {
-		uint8_t ro = 0;
-		uint8_t wo = 0;
-		uint8_t rw = 0;
-		for (int j = 0; j < 4; j++) {
-			uint8_t index = i*4 + j;
-			ro <<= 2;
-			wo <<= 2;
-			rw <<= 2;
-            if (ro_num > index)
-                ro |= pgm_read_byte((const uint8_t*) &(ro_ch[index].dataType));
-            if (wo_num > index)
-                wo |= pgm_read_byte((const uint8_t*) &(wo_ch[index].dataType));
-            if (rw_num > index)
-                rw |= pgm_read_byte((const uint8_t*) &(rw_ch[index].dataType));
-		}
-		response->data[1 + i + 4*0] = ro;
-		response->data[1 + i + 4*1] = wo;
-		response->data[1 + i + 4*2] = rw;
+	if (0 == unit) return getNumnberOfUnits(unit, request, response);
+	uint8_t count;
+	const tRFCodeFunctionItem *list;
+	if (0 == unit) {
+		count = fUCount + fU0Count;
+		list = RFU0Functions;
+	} else {
+		count = fUCount + RFUnits[unit-1].length;
+		list = RFUnits[unit-1].functions;
+	}
+	response->length = count*2;
+	for (int i = 0; i < count; i++) {
+		const tRFCodeFunctionItem *item;
+		if (fUCount > i) item = &RFStandardFunctions[i];
+		else item = &list[i-fUCount];
+		response->data[i*2] = pgm_read_byte(&(item->functionCode));
+		response->data[i*2+1] = pgm_read_byte(&(item->type.eDataInputOutput));
 	}
 	return ercOk;
 }
@@ -155,115 +129,20 @@ uint8_t setTextDescription(const uint8_t unit, const scString *request, sString 
 	return ercNotImplemented;
 }
 
-uint8_t _readWriteSingleUnitChannel(const uint8_t unit, const uint8_t request, uint8_t *data, uint8_t *responseLength, const bool isRead) {
-	uint8_t length = 0;
-	sChannel *channels = NULL;
-	const eChannelDataType channelDTReq = request >> 6;
-    const uint8_t channelNumPerm = request & 0x3F;
-    const uint8_t channelNum = channelNumPerm & 0x0F;
-	*responseLength = 0;
-    if (0x10 > channelNumPerm) {
-		if (isRead) {
-			length = pgm_read_byte(&(units[unit].channelsROLength));
-			channels = pgm_read_ptr(&(units[unit].channelsRO));
-		} else {
-			return ercChBadPermissions;
-		}
-    } else if (0x20 > channelNumPerm) {
-		if (! isRead) {
-			length = pgm_read_byte(&(units[unit].channelsWOLength));
-			channels = pgm_read_ptr(&(units[unit].channelsWO));
-		} else {
-			return ercChBadPermissions;
-		}
-    } else if (0x30 > channelNumPerm) {
-		length = pgm_read_byte(&(units[unit].channelsRWLength));
-		channels = pgm_read_ptr(&(units[unit].channelsRW));
-	} else {
-		return ercChBadChannels;
-	}
-	
-    if (length <= channelNum) {
-		return ercChBadChannels;
-	}
-    const eChannelDataType channelDT = pgm_read_byte((const uint8_t*) &(channels[channelNum].dataType));
-    void *value = pgm_read_ptr(&(channels[channelNum].value));
-	
-	if (channelDTReq != channelDT) {
-		return ercChValidationFailed;
-	}
-	
-	// validation done
-	if (isRead) {
-		data[0] = channelDT << 6 | channelNumPerm;
-		if (eCDTArray == channelDT) {
-			//uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) value)->length;
-			//memcpy(&(data[1]), value, arrayRawLength);
-			//*responseLength = 1 + arrayRawLength;
-		} else {
-			memcpy(&(data[1]), value, _dataTypeLength[channelDT]);
-			*responseLength = 1 + _dataTypeLength[channelDT];
-		}
-	} else {
-		if (eCDTArray == channelDT) {
-			//uint8_t arrayRawLength = _dataTypeLength[channelDT] + ((string*) data)->length;
-			//memcpy(value, &(data[0]), arrayRawLength);
-			//*responseLength = arrayRawLength;
-		} else {
-			memcpy(value, &(data[0]), _dataTypeLength[channelDT]);
-			*responseLength = _dataTypeLength[channelDT];
-		}
-	}
-	return ercOk;	
-}
+const PROGMEM tRFCodeFunctionItem RFStandardFunctions[fUCount] = {
+	{eFGetProperties, .function = &getPropertiesOfUnit, .type.fields.input = edtNone, .type.fields.output = edtUnspecified },
+	{eFGetTextDescription, .function = &getTextDescription, .type.fields.input = edtNone, .type.fields.output = edtString },
+	{eFSetTextDescription, .function = &setTextDescription, .type.fields.input = edtString, .type.fields.output = edtNone },
+};
 
-uint8_t readUnitChannel(const uint8_t unit, const scString *request, sString *response) {
-    uint8_t length = 0;
-    for (int i = 0; i < request->length; i++) {
-		uint8_t valueLength = 0;
-        uint8_t code = _readWriteSingleUnitChannel(unit, request->data[i], response->data + length, &valueLength, true);
-		length += valueLength;
-		
-		if (ercOk != code) {
-			// cancel and return error code instead
-			response->length = 0;
-			return code;
-		}
-	}
-	response->length = length;
-	return ercOk;
-}
-
-uint8_t writeUnitChannel(const uint8_t unit, const scString *request, sString *response) {
-	response->length = 0;
-	uint8_t length = 0;
-	while (length < request->length) {
-		uint8_t valueLength;
-		uint8_t code = _readWriteSingleUnitChannel(unit, request->data[length], (uint8_t*) request->data + length + 1, &valueLength, false);
-		length += 1 + valueLength;
-		if (ercOk != code) return code;
-	}
-	return ercOk;
-}
-
-const PROGMEM tRFCodeFunctionItem RFFunctions[_eFCount] = {
-	{eFSetSessionKey, &setSessionKey},
-	{eFGetListOfUnits, &getListOfUnits},
-	{eFSetAddress, &setMACAddress},
-	{eFGetStatistics, &getStatistics},
-    {eFResetTransactionId, &resetTransactionId},
-	{eFNOP, &rfNOP},
-	{eFSetRFChannel, &rfSetRFChannel},
-	{eFSetMode, &setMode},
-	
-	{eFGetPropertiesOfUnit, &getPropertiesOfUnit},
-	{eFGetTextDescription, &getTextDescription},
-	{eFSetTextDescription, &setTextDescription},
-	
-	//{eFReadSingleUnitChannel, &_readSingleUnitChannel},
-	
-    {eFReadUnitChannels, &readUnitChannel},
-    {eFWriteUnitChannels, &writeUnitChannel},
+const PROGMEM tRFCodeFunctionItem RFU0Functions[fU0Count] = {
+	{eFSetSessionKey, .function = &setSessionKey, .type.fields.input = edtByteArray, .type.fields.output = edtNone },
+	{eFSetAddress, .function = &setMACAddress, .type.fields.input = edtByteArray, .type.fields.output = edtNone },
+	{eFGetStatistics, .function = &getStatistics, .type.fields.input = edtNone, .type.fields.output = edtUnspecified },
+    {eFResetTransactionId, .function = &resetTransactionId, .type.fields.input = edtNone, .type.fields.output = edtByte },
+	{eFNOP, .function = &rfNOP, .type.fields.input = edtNone, .type.fields.output = edtNone },
+	{eFSetRFChannel, .function = &rfSetRFChannel, .type.fields.input = edtByte, .type.fields.output = edtNone },
+	{eFSetMode, .function = &setMode, .type.fields.input = edtByte, .type.fields.output = edtNone },
 };
 
 #endif

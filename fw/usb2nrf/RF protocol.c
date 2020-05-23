@@ -46,11 +46,11 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 	return ercOk;
 }
 
-fRFFunction findFunctionByCode(eFunctions code) {
-	for (uint8_t i = 0; i < _eFCount; i++) {
-		const uint8_t iCode = pgm_read_byte(&(RFFunctions[i].functionCode));
+fRFFunction findFunctionByCode(eU0Functions code) {
+	for (uint8_t i = 0; i < fU0Count; i++) {
+		const uint8_t iCode = pgm_read_byte(&(RFU0Functions[i].functionCode));
 		if (iCode == code) {
-			fRFFunction iFunction = pgm_read_ptr(&(RFFunctions[i].function));
+			fRFFunction iFunction = pgm_read_ptr(&(RFU0Functions[i].function));
 			return iFunction;
 		}
 	}
@@ -113,7 +113,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 
 void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData) {
 	#define DATA ((sResponse*) packetData)
-	fRFFunction method = findFunctionByCode(eFGetListOfUnits);
+	fRFFunction method = findFunctionByCode(eFGetNumberOfUnits);
 	sString responseArg = {
 		.length = 0,
 		.data = &(DATA->rsData[0])

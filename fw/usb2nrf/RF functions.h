@@ -13,31 +13,56 @@
 #include <stdint.h>
 
 typedef enum {
-	eFSetSessionKey = 0,
-	eFGetListOfUnits = 1,
-	eFSetAddress = 2,
-	eFGetStatistics = 3,
-    eFResetTransactionId = 4,
-	eFNOP = 5,
-	eFSetRFChannel = 6,
-	eFSetMode = 7,
-	
-	eFGetPropertiesOfUnit = 0x10,
-	eFGetTextDescription = 0x11,
-	eFSetTextDescription = 0x12,
-	
-    eFReadUnitChannels = 0x20,
-    eFWriteUnitChannels = 0x21,
-    eFReadSingleUnitChannel = 0x22,
-} eFunctions;
+	eFSetSessionKey = 0x10,
+	eFGetNumberOfUnits = 0x11,
+	eFSetAddress = 0x12,
+	eFGetStatistics = 0x13,
+    eFResetTransactionId = 0x14,
+	eFNOP = 0x15,
+	eFSetRFChannel = 0x16,
+	eFSetMode = 0x17,
+} eU0Functions;
+
+typedef enum {
+	eFGetProperties = 0x00,
+	eFGetTextDescription = 0x02,
+	eFSetTextDescription = 0x03,
+} eStandartFunctions;
+
+// up to 16 items
+typedef enum {
+	edtNone = 0,
+	edtBool = 1,
+	edtByte = 2,
+	edtInt32 = 3,
+	edtString = 4,
+	edtByteArray = 5,
+	edtUnspecified = 0xF
+} eDataType;
 
 typedef struct {
-	eFunctions functionCode;
+	eDataType input: 4;
+	eDataType output: 4;
+} fDataType;
+
+typedef struct { // 4 bytes
+	eU0Functions functionCode;
+	union {
+		uint8_t eDataInputOutput;
+		fDataType fields;
+	} type;
 	fRFFunction function;
 } tRFCodeFunctionItem;
 
-//extern const fRFFunction RFFunctions[_eFCount];
-#define _eFCount 14
-extern const tRFCodeFunctionItem RFFunctions[_eFCount];
+typedef struct {
+	const uint8_t length;
+	const tRFCodeFunctionItem *functions;
+} tUnit;
+
+#define fUCount 3
+extern const tRFCodeFunctionItem RFStandardFunctions[fUCount];
+
+#define fU0Count 7
+extern const tRFCodeFunctionItem RFU0Functions[fU0Count];
 
 #endif /* FUNCTIONS_H_ */
