@@ -23,7 +23,6 @@ void transmissionFailed(sString *address, sString *payload);
 void rf_master_init();
 void rf_slave_init();
 
-static eRFMode RFMode;
 static t_address ListenAddress;
 uint8_t RFChannel;
 
@@ -40,33 +39,6 @@ void rf_init() {
 #elif BT_SLAVE == BUILD_TYPE
 	rf_slave_init();
 #endif
-}
-
-
-eRFMode switchRFMode(eRFMode newMode) {
-	if (rmGetMode <= newMode) {
-		return RFMode;
-    }
-	RFMode = newMode;
-	switch (RFMode) {
-		case rmIdle: {
-			nRF_go_idle();
-			break;
-		}
-		case rmSlave: {
-			// start listen here
-			nRF_setRFChannel(RFChannel);
-			RFListen((uint8_t*)&ListenAddress);
-			break;
-		}
-		case rmMaster: {
-			nRF_go_idle();
-			break;
-		}
-		default:
-			break;
-	}
-	return RFMode;
 }
 
 void RFTransmit(tRfPacket *packet) {

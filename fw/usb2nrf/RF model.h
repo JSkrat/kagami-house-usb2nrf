@@ -67,8 +67,6 @@ inline void RFListen(const uint8_t *address) { nRF_listen(address); }
 void RFTransmit(tRfPacket *packet);
 bool RFSetChannel(uint8_t channel);
 
-
-eRFMode switchRFMode(eRFMode newMode);
 void switchMode(eModeType newMode);
 void setListenAddress(t_address *address);
 tRfPacket* nextRFBufferElement();
