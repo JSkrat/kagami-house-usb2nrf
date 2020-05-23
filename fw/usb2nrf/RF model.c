@@ -53,7 +53,7 @@ bool RFSetChannel(uint8_t channel) {
 #elif BT_SLAVE == BUILD_TYPE
 	if (nRF_validate_rf_channel(channel)) {
 #endif
-		saveSettings(esChannel, &channel);
+		saveSetting(esChannel, &channel);
 		RFChannel = channel;
 		return true;
 	} else {

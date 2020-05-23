@@ -11,6 +11,7 @@
 #include <avr/pgmspace.h>
 #include "defines.h"
 #include <avr/interrupt.h>
+#include "Settings.h"
 
 typedef struct {
 	volatile uint8_t *port;
@@ -127,5 +128,5 @@ const PROGMEM tRFCodeFunctionItem U1Functions[fU1Count] = {
 };
 
 const PROGMEM tUnit RFUnits[unitsCount] = {
-	{ .length = fU1Count, .functions = U1Functions },
+	{ .length = fU1Count, .functions = U1Functions, .description = esU1Description },
 };

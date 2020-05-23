@@ -16,11 +16,13 @@ typedef enum {
 	esAddress,
 	esChannel,
 	esMode,
+	esU0Description,
+	esU1Description,
 	// for validation only
 	esAmount
 } eSetting;
 
 uint8_t readSetting(eSetting type, void *output);
-uint8_t saveSettings(eSetting type, const void *data);
+uint8_t saveSetting(eSetting type, const void *data);
 
 #endif /* SETTINGS_H_ */

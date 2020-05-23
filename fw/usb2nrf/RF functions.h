@@ -11,6 +11,7 @@
 
 #include "../usb2nrf/RF protocol.h"
 #include <stdint.h>
+#include "Settings.h"
 
 typedef enum {
 	eFSetSessionKey = 0x10,
@@ -56,6 +57,7 @@ typedef struct { // 4 bytes
 typedef struct {
 	const uint8_t length;
 	const tRFCodeFunctionItem *functions;
+	const eSetting description;
 } tUnit;
 
 #define fUCount 3

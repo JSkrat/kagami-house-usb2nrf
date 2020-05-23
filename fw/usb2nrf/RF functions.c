@@ -23,7 +23,7 @@
 // for memcpy
 #include <string.h>
 #include "sstring.h"
-// if it is unit tests, it should be local file, not of main project one
+#include "Settings.h"
 
 uint8_t setSessionKey(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	// TODO after integrating cipher library
@@ -31,6 +31,7 @@ uint8_t setSessionKey(const uint8_t unit, const uint8_t function, const scString
 	(void) function;
     (void) request;
     (void) response;
+	//saveSetting(esKey, &(request->data[0]));
 	return ercNotImplemented;
 }
 
@@ -47,7 +48,6 @@ uint8_t setMACAddress(const uint8_t unit, const uint8_t function, const scString
     (void) unit;
 	(void) function;
     (void) response;
-//    response->length = 0;
 	if (5 == request->length) {
 		setListenAddress((t_address*) request->data);	
 		return ercOk;
@@ -116,7 +116,7 @@ uint8_t getPropertiesOfUnit(const uint8_t unit, const uint8_t function, const sc
 		count = fUCount + fU0Count;
 		list = RFU0Functions;
 	} else {
-		count = fUCount + RFUnits[unit-1].length;
+		count = fUCount + pgm_read_byte(&(RFUnits[unit-1].length));
 		list = pgm_read_ptr(&RFUnits[unit-1].functions);
 	}
 	response->length = count*2;
@@ -130,12 +130,24 @@ uint8_t getPropertiesOfUnit(const uint8_t unit, const uint8_t function, const sc
 	return ercOk;
 }
 
+eSetting _getUnitDescriptionId(const uint8_t unit) {
+	if (0 == unit) return esU0Description;
+	else return pgm_read_byte(&(RFUnits[unit-1].description));
+}
+
 uint8_t getTextDescription(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
-	return ercNotImplemented;
+	(void) function;
+	(void) request;
+	response->length = readSetting(_getUnitDescriptionId(unit), &(response->data[0]));
+	return ercOk;
 }
 
 uint8_t setTextDescription(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
-	return ercNotImplemented;
+	(void) function;
+	response->length = readSetting(_getUnitDescriptionId(unit), &(response->data[0]));
+	if (response->length != request->length) return ercBadRequestData;
+	saveSetting(_getUnitDescriptionId(unit), &(request->data[0]));
+	return ercOk;
 }
 
 const PROGMEM tRFCodeFunctionItem RFStandardFunctions[fUCount] = {

@@ -119,7 +119,7 @@ static void responseTimeoutEvent() {
 }
 
 void setListenAddress(t_address *address) {
-	saveSettings(esAddress, address);
+	saveSetting(esAddress, address);
 	// write address and re-listen
 	memcpy(ListenAddress, *address, MAC_SIZE);
 	nRF_setRFChannel(RFChannel);
@@ -129,7 +129,7 @@ void setListenAddress(t_address *address) {
 void switchMode(eModeType newMode) {
 	if (emNone == newMode || emAmount <= newMode) eMode = emSearchMaster;
 	else eMode = newMode;
-	saveSettings(esMode, &eMode);
+	saveSetting(esMode, &eMode);
 	switch (eMode) {
 		case emNormalSlave: {
 			responseTimeout = -1;
