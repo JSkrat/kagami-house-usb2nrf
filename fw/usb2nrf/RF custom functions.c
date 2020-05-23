@@ -10,6 +10,7 @@
 #include "RF protocol.h"
 #include <avr/pgmspace.h>
 #include "defines.h"
+#include <avr/interrupt.h>
 
 typedef struct {
 	volatile uint8_t *port;
@@ -25,9 +26,22 @@ typedef struct {
 #define MAP_SIZE 4
 const tMapFunctionToPinItem map[MAP_SIZE];
 
+ISR(TIMER0_OVF_vect) {
+	portServo &= ~_BV(poServo);
+}
+
+ISR(TIMER0_COMPA_vect) {
+	portServo |= _BV(poServo);
+}
+
 void RFCustomFunctionsInit() {
-	DDRD |= (1 << poLED_D1) | (1 << poLED_D2);
+	DDRD |= (1 << poLED_D1) | (1 << poLED_D2) | (1 << poServo);
 	DDRD &= ~((1 << piSW1) | (1 << piSW2));
+	// timer for the servo
+	TCCR0A = 0;
+	TCCR0B = (1 << CS02) | (0 << CS01) | (1 << CS00); // clkio/1024
+	OCR0A = 0;
+	TIMSK0 = _BV(TOIE0) | _BV(OCIE0A);
 }
 
 bool findPin(const uint8_t unit, const uint8_t function, gpio_pin *output) {
@@ -55,15 +69,26 @@ uint8_t readPin(const uint8_t unit, const uint8_t function, const scString *requ
 }
 
 uint8_t writePin(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
-	//(void) response;
+	(void) response;
 	if (1 != request->length) return ercBadRequestData;
-	response->length = 1;
-	response->data[0] = request->data[0];
 	gpio_pin pin;
 	if (! findPin(unit, function, &pin)) return 0x80;
 	if (0 == request->data[0]) *pin.port &= ~_BV(pin.pin);
 	else if (1 == request->data[0]) *pin.port |= _BV(pin.pin);
 	else return ercBadRequestData;
+	return ercOk;
+}
+
+uint8_t readRegister(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
+	response->length = 1;
+	response->data[0] = OCR0A;
+	return ercOk;
+}
+
+uint8_t writeRegister(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
+	(void) response;
+	if (1 != request->length) return ercBadRequestData;
+	OCR0A = request->data[0];
 	return ercOk;
 }
 
@@ -90,6 +115,14 @@ const PROGMEM tRFCodeFunctionItem U1Functions[fU1Count] = {
 	{
 		.functionCode = 0x17, .type.fields.input = edtBool, .type.fields.output = edtNone,
 		.function = &writePin
+	},
+	{
+		.functionCode = 0x18, .type.fields.input = edtNone, .type.fields.output = edtByte,
+		.function = &readRegister
+	},
+	{
+		.functionCode = 0x19, .type.fields.input = edtByte, .type.fields.output = edtNone,
+		.function = &writeRegister
 	},
 };
 
