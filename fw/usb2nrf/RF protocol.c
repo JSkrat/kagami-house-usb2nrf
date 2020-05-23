@@ -9,9 +9,8 @@
 #include "../usb2nrf/RF protocol.h"
 #include "../usb2nrf/RF functions.h"
 #ifndef UNIT_TESTING
-    #include "../usb2nrf/units_structure.h"
+	#include <avr/pgmspace.h>
 #else
-    #include "../usb2nrf_tests/units_structure.h"
     #include "../usb2nrf_tests/pgmspace.h"
 #endif
 #include <stdint.h>
@@ -19,6 +18,7 @@
 #include <stddef.h> // for offsetof
 #include "../usb2nrf/RF protocol internal.h"
 #include "../usb2nrf/RF info.h"
+#include "../usb2nrf/RF custom functions.h"
 
 
 //static enum eResponseCodes lastSentPacketStatus;
@@ -35,22 +35,34 @@ enum eResponseCodes validatePacket(const uint8_t length, const sRequest *data) {
 			return ercNotConsecutiveTransactionId;
 	}*/
 	// check if unit exists
-	if (UNITS_LENGTH <= data->rqUnitId) {
+	if (unitsCount+1 <= data->rqUnitId) {
 		return ercBadUnitId;
-	}
-	// only basic check if unit 0 functions called for not unit 0 and vice versa
-	if ((0 == data->rqUnitId) != (0x10 > data->rqFunctionId)) {
-		return ercBadFunctionId;
 	}
 	//if (_eFCount <= data->rqFunctionId) return ercBadFunctionId;
 	return ercOk;
 }
 
-fRFFunction findFunctionByCode(eU0Functions code) {
-	for (uint8_t i = 0; i < fU0Count; i++) {
-		const uint8_t iCode = pgm_read_byte(&(RFU0Functions[i].functionCode));
+fRFFunction findFunctionByCode(uint8_t unit, eU0Functions code) {
+	uint8_t count;
+	const tRFCodeFunctionItem *list;
+	if (0x10 > code) {
+		// search in common functions
+		count = fUCount;
+		list = RFStandardFunctions;
+	} else {
+		// search individually
+		if (0 == unit) {
+			count = fU0Count;
+			list = RFU0Functions;
+		} else {
+			count = pgm_read_byte(&(RFUnits[unit-1].length));
+			list = pgm_read_ptr(&(RFUnits[unit-1].functions));
+		}
+	}
+	for (uint8_t i = 0; i < count; i++) {
+		const uint8_t iCode = pgm_read_byte(&(list[i].functionCode));
 		if (iCode == code) {
-			fRFFunction iFunction = pgm_read_ptr(&(RFU0Functions[i].function));
+			fRFFunction iFunction = pgm_read_ptr(&(list[i].function));
 			return iFunction;
 		}
 	}
@@ -68,7 +80,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 	*responseLength = 3; // length of the empty response, without any data
 	switch (validation) {
 		case ercOk: {
-            fRFFunction method = findFunctionByCode(REQUEST_DATA->rqFunctionId);
+            fRFFunction method = findFunctionByCode(REQUEST_DATA->rqUnitId, REQUEST_DATA->rqFunctionId);
 			if (NULL == method) {
 				RESPONSE_DATA->rsCode = ercBadFunctionId;
 				break;
@@ -83,6 +95,7 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 			};
 			RESPONSE_DATA->rsCode = (*method)(
 				REQUEST_DATA->rqUnitId,
+				REQUEST_DATA->rqFunctionId,
 				&requestArg,
 				&responseArg
 			);
@@ -113,14 +126,14 @@ void generateResponse(const uint8_t requestLength, const uint8_t *requestData, u
 
 void generateAdvertisement(uint8_t *packetLength, uint8_t *packetData) {
 	#define DATA ((sResponse*) packetData)
-	fRFFunction method = findFunctionByCode(eFGetNumberOfUnits);
+	fRFFunction method = findFunctionByCode(0, eFGetProperties);
 	sString responseArg = {
 		.length = 0,
 		.data = &(DATA->rsData[0])
 	};
 	DATA->rsVersion = PROTOCOL_VERSION;
 	DATA->rsTransactionId = 0xAA;
-	DATA->rsCode = (*method)(0, NULL, &responseArg);
+	DATA->rsCode = (*method)(0, eFGetProperties, NULL, &responseArg);
 	*packetLength = 3 + responseArg.length;
 	#undef DATA
 }

@@ -23,7 +23,7 @@
 // arguments are request and response
 // caller should allocate space for the response
 // unit (first argument) is guaranteed (by RF Parser) to be correct
-typedef uint8_t (*fRFFunction)(const uint8_t, const scString*, sString*);
+typedef uint8_t (*fRFFunction)(const uint8_t, const uint8_t, const scString*, sString*);
 
 typedef struct {
 	uint8_t rqVersion;

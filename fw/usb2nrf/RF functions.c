@@ -25,24 +25,27 @@
 #include "sstring.h"
 // if it is unit tests, it should be local file, not of main project one
 
-uint8_t setSessionKey(const uint8_t unit, const scString *request, sString *response) {
+uint8_t setSessionKey(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	// TODO after integrating cipher library
     (void) unit;
+	(void) function;
     (void) request;
     (void) response;
 	return ercNotImplemented;
 }
 
-uint8_t getNumnberOfUnits(const uint8_t unit, const scString *request, sString *response) {
+uint8_t getNumnberOfUnits(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
     (void) unit;
+	(void) function;
     (void) request;
 	response->length = 1;
 	response->data[0] = unitsCount;
 	return ercOk;
 }
 
-uint8_t setMACAddress(const uint8_t unit, const scString *request, sString *response) {
+uint8_t setMACAddress(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
     (void) unit;
+	(void) function;
     (void) response;
 //    response->length = 0;
 	if (5 == request->length) {
@@ -53,8 +56,9 @@ uint8_t setMACAddress(const uint8_t unit, const scString *request, sString *resp
 	}
 }
 
-uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString *response) {
+uint8_t resetTransactionId(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	(void) unit;
+	(void) function;
 	(void) request;
 	lastTransacrionId = 128;
 	response->data[0] = lastTransacrionId;
@@ -62,31 +66,35 @@ uint8_t resetTransactionId(const uint8_t unit, const scString *request, sString 
 	return ercOk;
 }
 
-uint8_t rfSetRFChannel(const uint8_t unit, const scString *request, sString *response) {
+uint8_t rfSetRFChannel(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	(void) unit;
+	(void) function;
 	(void) response;
 	if (1 != request->length) return ercBadRequestData;
 	if (RFSetChannel(request->data[0]))	return ercOk;
 	else return 0x80;
 }
 
-uint8_t setMode(const uint8_t unit, const scString *request, sString *response) {
+uint8_t setMode(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	(void) unit;
+	(void) function;
 	(void) response;
 	if (1 != request->length) return ercBadRequestData;
 	switchMode(request->data[0]);
 	return ercOk;
 }
 
-uint8_t rfNOP(const uint8_t unit, const scString *request, sString *response) {
+uint8_t rfNOP(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	(void) unit;
+	(void) function;
 	(void) request;
 	(void) response;
 	return ercOk;
 }
 
-uint8_t getStatistics(const uint8_t unit, const scString *request, sString *response) {
+uint8_t getStatistics(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
     (void) unit;
+	(void) function;
     (void) request;
 	response->length = 12;
     #define STORE_16(index, value) response->data[index] = value & 0xFF; response->data[index+1] = ((uint16_t)value) >> 8
@@ -99,8 +107,9 @@ uint8_t getStatistics(const uint8_t unit, const scString *request, sString *resp
 	return ercOk;
 }
 
-uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString *response) {
-	if (0 == unit) return getNumnberOfUnits(unit, request, response);
+uint8_t getPropertiesOfUnit(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
+	(void) function;
+	if (0 == unit) return getNumnberOfUnits(unit, 0, request, response);
 	uint8_t count;
 	const tRFCodeFunctionItem *list;
 	if (0 == unit) {
@@ -121,11 +130,11 @@ uint8_t getPropertiesOfUnit(const uint8_t unit, const scString *request, sString
 	return ercOk;
 }
 
-uint8_t getTextDescription(const uint8_t unit, const scString *request, sString *response) {
+uint8_t getTextDescription(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 
-uint8_t setTextDescription(const uint8_t unit, const scString *request, sString *response) {
+uint8_t setTextDescription(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 

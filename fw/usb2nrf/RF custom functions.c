@@ -10,11 +10,11 @@
 #include "RF protocol.h"
 #include <avr/pgmspace.h>
 
-uint8_t readPin(const uint8_t function, const scString *request, sString *response) {
+uint8_t readPin(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 
-uint8_t writePin(const uint8_t function, const scString *request, sString *response) {
+uint8_t writePin(const uint8_t unit, const uint8_t function, const scString *request, sString *response) {
 	return ercNotImplemented;
 }
 
