@@ -16,6 +16,8 @@
 /*** USART ***/
 #define BAUDRATE 200000
 
+/*** timer for RF ***/
+#define RF_TIMER 2
 
 /*** LCD ***/
 //#define USE_LCD
@@ -44,6 +46,9 @@
 #define portButtons PORTD
 #define piSW1 PIND2
 #define piSW2 PIND3
+
+#define portServo PORTD
+#define poServo PORTD4
 
 /*** transiever ***/
 #define MAC_SIZE 5

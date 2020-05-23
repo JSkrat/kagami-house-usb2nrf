@@ -17,6 +17,7 @@
 #include "sstring.h"
 #include "../usb2nrf/RF info.h"
 #include "../usb2nrf/RF protocol.h"
+#include "defines.h"
 
 static int16_t responseTimeout; // negative value means it is disabled, event triggered when it becomes disabled
 static t_address ListenAddress;
@@ -26,7 +27,11 @@ void switchMode(eModeType newMode);
 static void responseTimeoutEvent();
 
 #ifndef UNIT_TESTING
+#if 0 == RF_TIMER
 ISR(TIMER0_COMPA_vect) {
+#elif 2 == RF_TIMER
+ISR(TIMER2_COMPA_vect) {
+#endif
 	// this is being called every millisecond
 	if (0 <= responseTimeout) {
 		if (0 > --responseTimeout) {
@@ -39,11 +44,18 @@ ISR(TIMER0_COMPA_vect) {
 void rf_slave_init() {
 	responseTimeout = -1;
 #ifndef UNIT_TESTING
+#if 0 == RF_TIMER
 	// now let's setup timer
 	TCCR0A = (1 << WGM01) | (0 << WGM00); // CTC mode
 	TCCR0B = (0 << CS02) | (1 << CS01) | (1 << CS00) | (0 << WGM02); // clk_io/64
 	OCR0A = 250; // compare match interrupt every millisecond
 	TIMSK0 = (1 << OCIE0A);
+#elif 2 == RF_TIMER
+	TCCR2A = (1 << WGM21) | (0 << WGM20);
+	TCCR2B = (1 << CS22) | (0 << CS21) | (0 << CS20) | (0 << WGM22); // clk_io/64
+	OCR2A = 250; // every millisecond
+	TIMSK2 = (1 << OCIE2A);
+#endif
 #endif
 	protocolInit();
 	init_rf_info();
