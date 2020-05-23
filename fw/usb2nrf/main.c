@@ -13,7 +13,6 @@
 #include "defines.h"
 #include "UART parser.h"
 #include "RF model.h"
-#include "ui.h"
 #include "my-stdlib.h"
 #include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
 #include "avr-nrf24l01-master/src/nrf24l01.h"
@@ -25,7 +24,6 @@ ISR(BADISR_vect, ISR_NAKED) {
 int main(void)
 {
 	/* hardware initialization */
-	ui_init();
 #if BT_MASTER == BUILD_TYPE
 	u_init();
 #endif
@@ -35,9 +33,7 @@ int main(void)
 	
 	sei();
 	
-	portLEDS &= ~(1 << poLED_D1);
     while (1) {
-		ui_redraw();
 		sleep_mode();
     }
 }

@@ -356,12 +356,6 @@ python "$(MSBuildProjectDirectory)\build number.py" "$(MSBuildProjectDirectory)\
     <Compile Include="UART protocol.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ui.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="ui.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="version.h">
       <SubType>compile</SubType>
     </Compile>

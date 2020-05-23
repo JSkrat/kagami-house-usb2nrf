@@ -1,6 +1,8 @@
 #include <avr/io.h>
 #include "defines.h"
 
+#ifdef USE_LCD
+
 .global LCD_write_byte
 
 LCD_write_byte:
@@ -42,3 +44,5 @@ LCD_write_byte:
     out SREG - __SFR_OFFSET, r19                    ; 1
 
     ret                                             ; 4
+
+	#endif
