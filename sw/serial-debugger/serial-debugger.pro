@@ -18,10 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    packet.cpp \
     serialthread.cpp
 
 HEADERS += \
     mainwindow.h \
+    packet.h \
     serialthread.h
 
 FORMS += \

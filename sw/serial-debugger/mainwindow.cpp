@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "serialthread.h"
+#include "packet.h"
 #include <QObject>
 #include <QMessageBox>
 #include <QCheckBox>
+#include <QHash>
 
 
 enum eModemCommand {
@@ -63,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     , title("Kagami house usb2nrf debugger")
 {
     ui->setupUi(this);
+    ui->centralwidget->setLayout(ui->horizontalLayout);
     this->ui->teConsole->clear();
 
     ui->leSerialPort->setText(this->port);
@@ -77,6 +80,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&(this->serial), &SerialThread::response, this, &MainWindow::serialResponse);
     connect(&(this->serial), &SerialThread::timeout, this, &MainWindow::serialTimeout);
     connect(&(this->serial), &SerialThread::error, this, &MainWindow::serialError);
+
+    // setup packet constructor
+    ui->tab_packet_constructor->setLayout(ui->vlPacketConstructor);
+    for (auto i = functionName.begin(); i != functionName.end(); ++i) {
+        ui->pcFunctionList->addItem(QString("0x%1 %2").arg(i.key(), 2, 16, QChar('0')).arg(i.value()), i.key());
+    }
 }
 
 MainWindow::~MainWindow()
@@ -109,7 +118,7 @@ void MainWindow::addMessage(QByteArray from, QString decorator, QString message,
                 .arg(background.green(), 2, 16, QChar('0'))
                 .arg(background.blue(), 2, 16, QChar('0'))
                 .arg(QString(from.toHex(':')).toUpper())
-                .arg(message)
+                .arg(message.replace('\n', "<br>"))
                 .arg(decorator.toHtmlEscaped())
                 );
 }
@@ -119,7 +128,16 @@ void MainWindow::addMessage(QByteArray from, QString decorator, QByteArray messa
 }
 
 void MainWindow::addSendMessage(QByteArray from, QByteArray message) {
-    this->addMessage(from, "> Send to", message, QColor::fromRgbF(1, 0.9, 0.9));
+    QString packet = message.toHex(':');
+    try {
+        packet += "\n" + Packet::ParseRequest(message);
+        this->curUnit = message[2];
+        this->curFunc = message[3];
+        this->requestPending = true;
+    } catch (std::runtime_error &e) {
+        // do nothing
+    }
+    this->addMessage(from, "> Send to", packet, QColor::fromRgbF(1, 0.9, 0.9));
 }
 
 void MainWindow::addACKMessage(QByteArray from, QByteArray message, bool timeout) {
@@ -131,10 +149,20 @@ void MainWindow::addACKMessage(QByteArray from, QByteArray message, bool timeout
 }
 
 void MainWindow::addReceiveMessage(QByteArray from, QByteArray message, bool timeout) {
+    QString packet = message.toHex(':');
+    try {
+        if (this->requestPending) {
+            this->requestPending = false;
+            packet += "\n" + Packet::ParseResponse(this->curUnit, static_cast<eRFFunction>(this->curFunc), message);
+        }
+    } catch (std::runtime_error &e) {
+        // do nothing
+    }
+
     if (! timeout) {
-        this->addMessage(from, "< Receive from", message, QColor::fromRgbF(0.9, 1, 0.9));
+        this->addMessage(from, "< Receive from", packet, QColor::fromRgbF(0.9, 1, 0.9));
     } else {
-        this->addMessage(from, "< Response timeout from", message, QColor::fromRgbF(0.9, 1, 0.8));
+        this->addMessage(from, "< Response timeout from", packet, QColor::fromRgbF(0.9, 1, 0.8));
     }
 }
 
@@ -380,7 +408,8 @@ void MainWindow::serialError(const QString &message)
     this->addEtcMessage(
                 QByteArray(),
                 QString("serial error %1").arg(message)
-                );}
+    );
+}
 
 
 void MainWindow::on_pushButton_clicked()
@@ -436,9 +465,7 @@ void MainWindow::on_pbSetMasterAddress_clicked()
 {
     QByteArray pkt;
     pkt.append(mcSetListenAddress);
-    for (QString b: this->ui->leAddressListen->text().split(":")) {
-        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
-    }
+    pkt.append(Packet::parseHex(this->ui->leAddressListen->text()));
     this->serialTransaction(pkt);
     this->addEtcMessage(pkt.mid(1), "> Set master address");
 }
@@ -447,9 +474,7 @@ void MainWindow::on_pbListen_clicked()
 {
     QByteArray pkt;
     pkt.append(mcListen);
-    for (QString b: this->ui->leAddressListen->text().split(":")) {
-        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
-    }
+    pkt.append(Packet::parseHex(this->ui->leAddressListen->text()));
     this->serialTransaction(pkt);
     this->addEtcMessage(pkt.mid(1), "> Listen");
 }
@@ -458,12 +483,27 @@ void MainWindow::on_pbTransmitTo_clicked()
 {
     QByteArray pkt;
     pkt.append(mcTransmit);
-    for (QString b: this->ui->leAddressTransmitTo->text().split(":")) {
-        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
-    }
-    for (QString b: this->ui->lePayloadToTransmit->text().split(":")) {
-        pkt.append(static_cast<char>(b.toInt(nullptr, 16)));
-    }
+    pkt.append(Packet::parseHex(this->ui->leAddressTransmitTo->text()));
+    pkt.append(Packet::parseHex(this->ui->lePayloadToTransmit->text()));
     this->serialTransaction(pkt);
     this->addSendMessage(pkt.mid(1, 5), pkt.mid(6));
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    // serialize to payload
+    QByteArray req = Packet::serializeRequest(
+                ui->pcVersion->text().toUInt(nullptr, 16),
+                ui->pcTransaction->text().toUInt(nullptr, 16),
+                ui->pcUnitId->text().toUInt(nullptr, 16),
+                ui->pcFunctionList->currentData().toUInt(),
+                Packet::parseHex(ui->pcData->text())
+    );
+    ui->lePayloadToTransmit->setText(req.toHex(':'));
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    this->on_pushButton_2_clicked();
+    this->on_pbTransmitTo_clicked();
 }

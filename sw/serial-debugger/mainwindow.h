@@ -13,6 +13,9 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+    int curUnit;
+    int curFunc;
+    bool requestPending = false;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -49,6 +52,10 @@ private slots:
     void on_pbListen_clicked();
 
     void on_pbTransmitTo_clicked();
+
+    void on_pushButton_2_clicked();
+
+    void on_pushButton_3_clicked();
 
 private:
     Ui::MainWindow *ui;
