@@ -6,7 +6,7 @@
  */ 
 #if BT_MASTER == BUILD_TYPE || defined UNIT_TESTING
 
-#include "../usb2nrf/RF model.h"
+#include "../KagamiCore/RF model.h"
 #ifndef UNIT_TESTING
 	#include <avr/interrupt.h>
 #else
@@ -25,6 +25,7 @@ static tRfPacket RFBuffer[RFBUFFER_SIZE];
 // end points to the next free space
 static int rfbBegin = 0, rfbEnd = 0, rfbSize = 0;
 static int responseTimeout; // negative value means it is disabled, event triggered when it becomes disabled
+static t_address ListenAddress;
 
 #ifndef UNIT_TESTING
 ISR(TIMER0_COMPA_vect) {
@@ -50,8 +51,10 @@ void rf_master_init() {
  * RF buffer functions
  */
 tRfPacket* nextRFBufferFreeElement() {
-	if (RFBUFFER_SIZE <= rfbSize) return NULL;
-	rfbSize++;
+	if (RFBUFFER_SIZE <= rfbSize++) {
+		rfbSize--;
+		return NULL;
+	}
 	tRfPacket *ret = &(RFBuffer[rfbEnd++]);
 	if (RFBUFFER_SIZE <= rfbEnd) rfbEnd = 0;
 	return ret;

@@ -57,7 +57,8 @@ void nRF24L01_begin(nRF24L01 *rf) {
     nRF24L01_write_register(rf, EN_RXADDR, &data, 1);
 }
 
-uint8_t nRF24L01_send_command(nRF24L01 *rf, uint8_t command, void *data, size_t length) {
+uint8_t nRF24L01_send_command(nRF24L01 *rf, uint8_t command, void *data,
+    size_t length) {
     set_low(rf->ss);
 
     rf->status = spi_transfer(command);
@@ -69,11 +70,13 @@ uint8_t nRF24L01_send_command(nRF24L01 *rf, uint8_t command, void *data, size_t 
     return rf->status;
 }
 
-uint8_t nRF24L01_write_register(nRF24L01 *rf, uint8_t reg_address, void *data, size_t length) {
+uint8_t nRF24L01_write_register(nRF24L01 *rf, uint8_t reg_address, void *data,
+    size_t length) {
     return nRF24L01_send_command(rf, W_REGISTER | reg_address, data, length);
 }
 
-uint8_t nRF24L01_read_register(nRF24L01 *rf, uint8_t reg_address, void *data, size_t length) {
+uint8_t nRF24L01_read_register(nRF24L01 *rf, uint8_t reg_address, void *data,
+    size_t length) {
     return nRF24L01_send_command(rf, R_REGISTER | reg_address, data, length);
 }
 
@@ -116,10 +119,14 @@ bool nRF24L01_read_received_data(nRF24L01 *rf, nRF24L01Message *message) {
         message->length = 0;
         return false;
     }
-    nRF24L01_send_command(rf, R_RX_PL_WID, &message->length, 1);
+
+    nRF24L01_read_register(rf, R_RX_PL_WID, &message->length, 1);
+
     if (message->length > 0) {
-        nRF24L01_send_command(rf, R_RX_PAYLOAD, &message->data, message->length);
+        nRF24L01_send_command(rf, R_RX_PAYLOAD, &message->data,
+            message->length);
     }
+
     return true;
 }
 

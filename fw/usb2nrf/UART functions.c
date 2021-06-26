@@ -13,6 +13,7 @@
 #include "../usb2nrf/avr-nrf24l01-master/src/nrf24l01.h"
 #include "../usb2nrf/nRF model.h"
 #include "../usb2nrf/RF model.h"
+#include "../usb2nrf/RF model master.h"
 #include "../usb2nrf/version.h"
 #include <string.h>
 #ifndef UNIT_TESTING
@@ -22,7 +23,7 @@
 #endif
 
 uint8_t uStatus(const scString *request, sString *response) {
-	response->length = 0x13;
+	response->length = 0x14;
 	for (int i = 0x00; i <= 0x09; i++) {
 		nRF24L01_read_register(rfTransiever, i, &(response->data[i]), 1);
 	}
@@ -32,6 +33,7 @@ uint8_t uStatus(const scString *request, sString *response) {
 	for (int i = 0x1C; i <= 0x1D; i++) {
 		nRF24L01_read_register(rfTransiever, i, &(response->data[i - 0x1C + 0x11]), 1);
 	}
+	response->data[0x13] = rfbSize;
 	//*((uint16_t*) (respBuffer.pkg.payload+1)) = rfPacketsSent;
 	//*((uint16_t*) (respBuffer.pkg.payload+3)) = rfTimeouts;
 	//*((uint16_t*) (respBuffer.pkg.payload+5)) = badRFPackets;

@@ -116,8 +116,8 @@ ISR(PCINT0_vect) {
 					break;
 				}
 			}
-			uint8_t data = _BV(RX_DR);
-			nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
+			//uint8_t data = _BV(RX_DR);
+			//nRF24L01_write_register(rfTransiever, STATUS, &data, 1);
 			if (cNRF_DataReceived) (cNRF_DataReceived)(&address, &payload);
 		} while (receivedDataPresent());
 	}

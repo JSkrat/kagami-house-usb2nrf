@@ -10,12 +10,12 @@
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
-#include "defines.h"
-#include "UART parser.h"
-#include "RF model.h"
-#include "my-stdlib.h"
-#include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
-#include "avr-nrf24l01-master/src/nrf24l01.h"
+//#include "defines.h"
+#include "../usb2nrf/UART parser.h"
+#include "../usb2nrf/RF model.h"
+//#include "my-stdlib.h"
+//#include "avr-nrf24l01-master/src/nrf24l01-mnemonics.h"
+//#include "avr-nrf24l01-master/src/nrf24l01.h"
 
 ISR(BADISR_vect, ISR_NAKED) {
 	// nothing here

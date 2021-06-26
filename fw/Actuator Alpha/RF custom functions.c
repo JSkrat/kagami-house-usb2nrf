@@ -5,14 +5,13 @@
  *  Author: Mintytail
  */ 
 
-#if BT_SLAVE == BUILD_TYPE
 #include "RF custom functions.h"
-#include "RF functions.h"
-#include "RF protocol.h"
+#include "../KagamiCore/RF functions.h"
+#include "../KagamiCore/RF protocol.h"
 #include <avr/pgmspace.h>
-#include "defines.h"
+#include "../KagamiCore/defines.h"
 #include <avr/interrupt.h>
-#include "Settings.h"
+#include "../KagamiCore/Settings.h"
 
 typedef struct {
 	volatile uint8_t *port;
@@ -25,7 +24,7 @@ typedef struct {
 	uint8_t function;
 } tMapFunctionToPinItem;
 
-#define MAP_SIZE 4
+#define MAP_SIZE 12
 const tMapFunctionToPinItem map[MAP_SIZE];
 
 ISR(TIMER0_OVF_vect) {
@@ -37,8 +36,10 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void RFCustomFunctionsInit() {
-	DDRD |= (1 << poLED_D1) | (1 << poLED_D2) | (1 << poServo);
-	DDRD &= ~((1 << piSW1) | (1 << piSW2));
+	DDRD |= (1 << PORTD5) | (1 << PORTD0) | (1 << PORTD1) | (1 << PORTD2);
+	DDRD &= ~((1 << PIND3) | (1 << PIND4));
+	DDRB |= (1 << PORTB7);
+	DDRC |= (1 << PORTC3) | (1 << PORTC4) | (1 << PORTC5);
 	// timer for the servo
 	TCCR0A = 0;
 	TCCR0B = (1 << CS02) | (0 << CS01) | (1 << CS00); // clkio/1024
@@ -95,10 +96,18 @@ uint8_t writeRegister(const uint8_t unit, const uint8_t function, const scString
 }
 
 const PROGMEM tMapFunctionToPinItem map[MAP_SIZE] = {
-	{ .unit = 1, .function = 0x10, .pin = {.port = &PIND, .pin = piSW1} },
-	{ .unit = 1, .function = 0x12, .pin = {.port = &PIND, .pin = piSW2} },
-	{ .unit = 1, .function = 0x15, .pin = {.port = &PORTD, .pin = poLED_D1} },
-	{ .unit = 1, .function = 0x17, .pin = {.port = &PORTD, .pin = poLED_D2} },
+	{ .unit = 1, .function = 0x10, .pin = {.port = &PORTB, .pin = PORTB7} },
+	{ .unit = 1, .function = 0x11, .pin = {.port = &PORTB, .pin = PORTB7} },
+	{ .unit = 1, .function = 0x12, .pin = {.port = &PORTD, .pin = PORTD5} },
+	{ .unit = 1, .function = 0x13, .pin = {.port = &PORTD, .pin = PORTD5} },
+	{ .unit = 1, .function = 0x14, .pin = {.port = &PIND, .pin = PIND3} },
+	{ .unit = 1, .function = 0x16, .pin = {.port = &PIND, .pin = PIND4} },
+	{ .unit = 1, .function = 0x19, .pin = {.port = &PORTD, .pin = PORTD0} },
+	{ .unit = 1, .function = 0x1b, .pin = {.port = &PORTD, .pin = PORTD1} },
+	{ .unit = 1, .function = 0x1d, .pin = {.port = &PORTD, .pin = PORTD2} },
+	{ .unit = 1, .function = 0x1f, .pin = {.port = &PORTC, .pin = PORTC3} },
+	{ .unit = 1, .function = 0x21, .pin = {.port = &PORTC, .pin = PORTC4} },
+	{ .unit = 1, .function = 0x23, .pin = {.port = &PORTC, .pin = PORTC5} },	
 };
 
 const PROGMEM tRFCodeFunctionItem U1Functions[fU1Count] = {
@@ -107,28 +116,51 @@ const PROGMEM tRFCodeFunctionItem U1Functions[fU1Count] = {
 		.function = &readPin
 	},
 	{
+		.functionCode = 0x11, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
+	},
+	{
 		.functionCode = 0x12, .type.fields.input = edtNone, .type.fields.output = edtBool,
 		.function = &readPin
 	},
 	{
-		.functionCode = 0x15, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.functionCode = 0x13, .type.fields.input = edtBool, .type.fields.output = edtNone,
 		.function = &writePin
 	},
 	{
-		.functionCode = 0x17, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.functionCode = 0x14, .type.fields.input = edtNone, .type.fields.output = edtBool,
+		.function = &readPin
+	},
+	{
+		.functionCode = 0x16, .type.fields.input = edtNone, .type.fields.output = edtBool,
+		.function = &readPin
+	},
+	{
+		.functionCode = 0x19, .type.fields.input = edtBool, .type.fields.output = edtNone,
 		.function = &writePin
 	},
 	{
-		.functionCode = 0x18, .type.fields.input = edtNone, .type.fields.output = edtByte,
-		.function = &readRegister
+		.functionCode = 0x1B, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
 	},
 	{
-		.functionCode = 0x19, .type.fields.input = edtByte, .type.fields.output = edtNone,
-		.function = &writeRegister
+		.functionCode = 0x1D, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
+	},
+	{
+		.functionCode = 0x1F, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
+	},
+	{
+		.functionCode = 0x21, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
+	},
+	{
+		.functionCode = 0x23, .type.fields.input = edtBool, .type.fields.output = edtNone,
+		.function = &writePin
 	},
 };
 
-const PROGMEM tUnit RFUnits[unitsCount] = {
+const PROGMEM tUnit CRFUnits[unitsCount] = {
 	{ .length = fU1Count, .functions = U1Functions, .description = esU1Description },
 };
-#endif

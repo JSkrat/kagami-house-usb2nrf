@@ -5,6 +5,10 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "usb2nrf", "usb2nrf.cproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
 EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "KagamiCore", "..\KagamiCore\KagamiCore.cproj", "{FE9C669C-6247-407C-A520-C7C315ED8C02}"
+EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Actuator Alpha", "Actuator Alpha\Actuator Alpha.cproj", "{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AVR = Debug|AVR
@@ -21,6 +25,22 @@ Global
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.Build.0 = Release|AVR
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.slave|AVR.ActiveCfg = slave|AVR
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.slave|AVR.Build.0 = slave|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.Debug|AVR.ActiveCfg = Debug|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.Debug|AVR.Build.0 = Debug|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.master|AVR.ActiveCfg = Debug|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.master|AVR.Build.0 = Debug|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.Release|AVR.ActiveCfg = Release|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.Release|AVR.Build.0 = Release|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.slave|AVR.ActiveCfg = Debug|AVR
+		{FE9C669C-6247-407C-A520-C7C315ED8C02}.slave|AVR.Build.0 = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.Debug|AVR.ActiveCfg = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.Debug|AVR.Build.0 = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.master|AVR.ActiveCfg = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.master|AVR.Build.0 = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.Release|AVR.ActiveCfg = Release|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.Release|AVR.Build.0 = Release|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.slave|AVR.ActiveCfg = Debug|AVR
+		{BFF6926E-BBDB-4C39-A741-D58FF864E0CC}.slave|AVR.Build.0 = Debug|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

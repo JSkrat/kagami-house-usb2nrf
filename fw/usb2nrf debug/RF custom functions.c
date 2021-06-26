@@ -5,14 +5,13 @@
  *  Author: Mintytail
  */ 
 
-#if BT_SLAVE == BUILD_TYPE
 #include "RF custom functions.h"
-#include "RF functions.h"
-#include "RF protocol.h"
+#include "../KagamiCore/RF functions.h"
+#include "../KagamiCore/RF protocol.h"
 #include <avr/pgmspace.h>
-#include "defines.h"
+#include "../KagamiCore/defines.h"
 #include <avr/interrupt.h>
-#include "Settings.h"
+#include "../KagamiCore/Settings.h"
 
 typedef struct {
 	volatile uint8_t *port;
@@ -131,4 +130,3 @@ const PROGMEM tRFCodeFunctionItem U1Functions[fU1Count] = {
 const PROGMEM tUnit RFUnits[unitsCount] = {
 	{ .length = fU1Count, .functions = U1Functions, .description = esU1Description },
 };
-#endif

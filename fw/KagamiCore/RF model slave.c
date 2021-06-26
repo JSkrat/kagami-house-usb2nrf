@@ -5,7 +5,7 @@
  *  Author: Mintytail
  */ 
 #if BT_SLAVE == BUILD_TYPE
-#include "../usb2nrf/RF model.h"
+#include "../KagamiCore/RF model.h"
 #ifndef UNIT_TESTING
 	#include <avr/interrupt.h>
 	#include "Settings.h"
@@ -15,11 +15,12 @@
 #include <stdint.h>
 #include <string.h>
 #include "sstring.h"
-#include "../usb2nrf/RF info.h"
-#include "../usb2nrf/RF protocol.h"
+#include "../KagamiCore/RF info.h"
+#include "../KagamiCore/RF protocol.h"
 #include "defines.h"
 
 static int16_t responseTimeout; // negative value means it is disabled, event triggered when it becomes disabled
+static t_address ListenAddress;
 static eModeType eMode;
 
 void switchMode(eModeType newMode);
@@ -142,6 +143,10 @@ void switchMode(eModeType newMode) {
 			break;
 		}
 	}
+}
+
+eModeType getRFMode() {
+	return eMode;
 }
 
 #endif
